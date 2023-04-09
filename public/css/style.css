@@ -1,0 +1,182 @@
+/**
+ * reset browser default styles
+ */
+ html {
+  -webkit-text-size-adjust:100%;
+  -ms-text-size-adjust:100%;
+  -webkit-tap-highlight-color:rgba(0, 0, 0, 0);
+  height:100%;
+}
+
+body {
+  font-family:Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color:#050505;
+  background:#fff;
+  margin:0;
+  font-size:14px;
+  line-height:1.42857143;
+}
+
+*, ::after, ::before {
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
+}
+
+article, aside, details, figcaption, figure, footer, header, main, menu, nav, section, summary, picture, audio, canvas, progress, video{
+  display:block;
+}
+
+[hidden], template{display:none;}
+abbr[title]{
+  border-bottom:1px dotted;
+  cursor:help;
+}
+b, strong{font-weight:bold;}
+small{font-size:80%;}
+sub, sup{
+  position:relative;
+  font-size:70%;
+  line-height:0;
+  vertical-align:baseline;
+}
+sup{top:-.5em;}
+sub{bottom:-.25em;}
+svg:not(:root){overflow:hidden;}
+
+figure{margin:0;}
+pre{overflow:auto;}
+code, kbd, pre, samp{
+  font-family:Consolas,Menlo,Monaco,"Lucida Console","Liberation Mono","Courier New",monospace,sans-serif;
+  font-size:1em;
+}
+
+button, input, optgroup, select, textarea{
+  margin:0;
+  font:inherit;
+  color:inherit;
+}
+button, select{text-transform:none;}
+button, input{overflow: visible;}
+
+button, html input[type="button"], input[type="reset"], input[type="submit"]{-webkit-appearance:button; cursor:pointer;}
+button[disabled], html input[disabled]{cursor:default;}
+button::-moz-focus-inner, input::-moz-focus-inner{padding:0; border:0 none;}
+input{line-height:normal;}
+input[type="checkbox"], input[type="radio"]{vertical-align:middle;  }
+input[type="radio"][disabled], input[type="checkbox"][disabled], fieldset[disabled] input[type="radio"], fieldset[disabled] input[type="checkbox"]{cursor:not-allowed;}
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button{height:auto;}
+input[type="search"]{-webkit-appearance:textfield;}
+input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration{-webkit-appearance:none;}
+fieldset{
+  padding:.35em .625em .75em;
+  margin:0 2px;
+  border:1px solid #c0c0c0;
+}
+legend{padding:0; border:0 none;}
+textarea{overflow:auto; resize:vertical;}
+optgroup{font-weight:bold;}
+progress{vertical-align: baseline;}
+
+table{
+  border-spacing:0;
+  border-collapse:collapse;
+}
+thead{
+  display:table-header-group;
+  vertical-align:middle;
+}
+tbody{
+  display:table-row-group;
+  vertical-align:middle;
+}
+td, th{
+  vertical-align:middle;
+  padding:0;
+}
+
+audio, canvas, iframe, img, svg, video{vertical-align:middle;}
+
+ul, ol{
+  margin-top:0;
+  margin-bottom:10px;
+}
+ul ul, ol ul, ul ol, ol ol{margin-bottom:0;}
+dl{margin-top:0; margin-bottom:10px;}
+dt, dd{line-height:1.42857143;}
+dt{font-weight:bold;margin:0 0 .1em 0;}
+dd{margin-left:0;margin-bottom:5px;}
+
+hr{
+  -webkit-box-sizing:content-box;
+  -moz-box-sizing:content-box;
+  box-sizing:content-box;
+  display:block;
+  height:1px;
+  border:0 none;
+  border-top:1px solid #ccc;
+  margin:1em 0;
+  padding:0;
+}
+img{
+  border:0 none;
+  max-width:100% !important;
+  display:block;
+}
+
+h1{font-size:2.20em;}
+h2{font-size:2.00em;}
+h3{font-size:1.60em;}
+h4{font-size:1.25em;}
+h5{font-size:1.14em;}
+h6{font-size:1.09em;}
+h1, h2, h3, h4, h5, h6{
+  line-height:1.35;
+  margin: 0 0 0.45em;
+}
+p{
+  font-size:1em;
+  margin: 0 0 0.30em;
+}
+::-moz-selection{background:#b3d4fc;}
+::selection{background:#b3d4fc;}
+a{
+  background:transparent;
+}
+a:hover, a:active, a:focus{
+  outline:0 none;
+}
+a:hover{text-decoration:underline;}
+
+
+
+
+
+/**
+ * Project Css code
+ */
+
+/*# Signin Page  */
+.form_container{
+  width:80%;
+  max-width:600px;
+  margin:40px auto 0;
+}
+.form_container label{
+  display:block;
+  margin-bottom:10px;
+}
+label > span{
+  display:block;
+  font-size:1em;
+}
+.form_container .form_error{
+  font-size:14px;
+  color:red;
+}
+label > input{
+  padding:10px 24px;
+}
+label > input:focus{
+  outline:0 none;
+}
