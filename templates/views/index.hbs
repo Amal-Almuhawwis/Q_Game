@@ -1,0 +1,17 @@
+{{>header}}
+<h1>Available Games</h1>
+{{#if games}}
+<form action="/game/join" method="post">
+{{#each games}}
+<button type="submit" name="game_id" value="{{this.id}}">{{this.game}}</button>
+{{/each}}
+</form>
+{{else}}
+<p>No available games.</p>
+{{/if}}
+<br /><hr />
+<form action="/game/create" method="post">
+  <input type="text" name="game" placeholder="Game" />
+  <input type="submit" value="Create Game" />
+</form>
+{{>footer}}

@@ -1,0 +1,30 @@
+{{>header}}
+<div class="form_container">
+  <h1>SignUp</h1>
+  {{#if errors}}
+  <div class="error-box">
+  {{#each errors}}
+  <p>{{this}}</li>
+  {{/each}}
+  </div>
+  {{/if}}
+  <form id="signup_form" action="/signup" method="post">
+    <label>
+      <span>Username</span>
+      <input type="text" id="username" name="username" placeholder="Username" value="{{username}}" />
+    </label>    
+    <label>
+      <span>Password</span>
+      <input type="password" id="password" name="password" placeholder="Password" />
+    </label>
+    <label>
+      <span>Re Enter Password</span>
+      <input type="password" id="repassword" name="repassword" placeholder="Password" />
+    </label>
+    <label>
+      <input type="submit" id="signup_btn" value="SignUp" />
+      <a href="/signin">already have an account?</a>
+    </label>
+  </form>
+</div>
+{{>footer}}

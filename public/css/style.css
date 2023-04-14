@@ -180,3 +180,42 @@ label > input{
 label > input:focus{
   outline:0 none;
 }
+
+.form_container input.err{
+  border-color:red;
+}
+.error-box p{
+  color:red;
+}
+
+
+
+#game_container svg{
+  display:block;
+  margin: 0 auto;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
+}
+svg rect{
+  pointer-events: all;
+}
+
+svg circle#p1{
+  fill:blue;
+}
+
+svg circle#p2{
+  fill:red;
+}
+
+svg rect.wall{
+  fill:none;
+}
+svg rect.wall.active{
+  fill:#000;
+}
+svg rect.wall.hov, svg rect.square.hov{
+  fill:rgba(0,0,0,.3);
+}
