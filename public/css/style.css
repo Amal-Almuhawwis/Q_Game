@@ -219,3 +219,31 @@ svg rect.wall.active{
 svg rect.wall.hov, svg rect.square.hov{
   fill:rgba(0,0,0,.3);
 }
+
+
+
+.players{
+  display:flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-evenly;
+  padding: 20px;
+}
+.player_box{
+  padding:10px;
+}
+.player_box.p1 h3{
+  color:blue;
+}
+.player_box.p2 h3{
+  color:red;
+}
+.player_box.active{
+  border:2px dashed #eee;
+}
+.player_box.active.current{
+  border:2px dashed #0e8841;
+}
+#message, #timer{
+  text-align:center;
+}

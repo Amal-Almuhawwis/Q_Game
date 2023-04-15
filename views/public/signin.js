@@ -40,5 +40,4 @@
       $password.classList.remove('err');
     }
   }, false);
-
 })();
