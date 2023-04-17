@@ -1,27 +1,26 @@
 {
-    "name": "express",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "dev": "nodemon index -e js,hbs",
-      "build": "uglifyjs node_modules\\socket.io\\client-dist\\socket.io.js src\\public\\board.js src\\public\\signin.js src\\public\\signup.js -o public\\js\\script.min.js --compress drop_console=false --mangle toplevel=true"
-    },
-    "author": "",
-    "license": "ISC",
-    "dependencies": {
-      "bcrypt": "^5.1.0",
-      "body-parser": "^1.20.2",
-      "express": "^4.18.2",
-      "express-session": "^1.17.3",
-      "hbs": "^4.2.0",
-      "mongodb": "^5.2.0",
-      "socket.io": "^4.6.1"
-    },
-    "devDependencies": {
-      "nodemon": "^2.0.22",
-      "uglify-js": "^3.17.4"
-    }
+  "name": "express",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "uglifyjs node_modules\\socket.io\\client-dist\\socket.io.js src\\public\\board.js src\\public\\main.js src\\public\\signin.js src\\public\\signup.js -o public\\js\\script.min.js --compress drop_console=false --mangle toplevel=true",
+    "dev": "nodemon -e js,hbs index"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "hbs": "^4.2.0",
+    "mongodb": "^5.2.0",
+    "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "uglify-js": "^3.17.4"
   }
-  
+}
