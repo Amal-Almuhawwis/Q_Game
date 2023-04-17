@@ -2,7 +2,7 @@
   if (!document.getElementById('page_board')) return;
 
   var 
-    PlayerID, isMyTurn,
+    PlayerID, isMyTurn, TimerIV,
     HAS_PAWN = 'has_pawn',
     HOVER = 'hov',
     SQUARE = 'square',
@@ -53,23 +53,25 @@
       //TODO:: check if user is allowed to make a move
       // move the pawn if click on an active(has hover) rect
       if (isMyTurn && rect.classList.contains(HOVER) && (player = rect.getAttribute('data-player'))) {
-        pawn = document.getElementById(player);
-        // find pawn current position
-        pawn_x = +pawn.getAttribute('data-x');
-        pawn_y = +pawn.getAttribute('data-y');
+        // pawn = document.getElementById(player);
+        // // find pawn current position
+        // pawn_x = +pawn.getAttribute('data-x');
+        // pawn_y = +pawn.getAttribute('data-y');
 
-        // remove has_pawn from current pawn square
-        document.getElementById(c_square(pawn_x, pawn_y)).classList.remove(HAS_PAWN);
+        // // remove has_pawn from current pawn square
+        // document.getElementById(c_square(pawn_x, pawn_y)).classList.remove(HAS_PAWN);
 
-        // set the new pawn position
-        pawn.setAttribute('data-x', x);
-        pawn.setAttribute('data-y', y);
-        // move the pawn to the new position
-        pawn.setAttribute('cx', x * 10 + 4);
-        pawn.setAttribute('cy', y * 10 + 4);
-        rect.classList.add(HAS_PAWN);
+        // // set the new pawn position
+        // pawn.setAttribute('data-x', x);
+        // pawn.setAttribute('data-y', y);
+        // // move the pawn to the new position
+        // pawn.setAttribute('cx', x * 10 + 4);
+        // pawn.setAttribute('cy', y * 10 + 4);
+        // rect.classList.add(HAS_PAWN);
 
+        // make the move from the server
         socket.emit('move', {player: PlayerID, x, y});
+        isMyTurn = false;
       }
       // make sure to remove all hover effect
       removeHover();
@@ -112,6 +114,9 @@
     rect.setAttribute('height', VERTICAL === dir ? '8' : '2');
     rect.setAttribute('x', VERTICAL === dir ? (x * 10 + 8) : (x * 10));
     rect.setAttribute('y', VERTICAL === dir ? (y * 10) : (y * 10 + 8));
+    rect.setAttribute('data-x', x);
+    rect.setAttribute('data-y', y);
+    rect.setAttribute('data-o', dir);
     rect.classList.add(WALL);
 
     // semulate hover effect
@@ -137,14 +142,22 @@
     // draw the wall if applicable
     rect.addEventListener('click', function() {
       //TODO:: check if user can draw a wall first
-      var sibling;
+      var sibling, walls;
       if (isMyTurn && !rect.classList.contains('active')) {
+        walls = [{orientation: dir, x: x, y: y}];
         if ((sibling = findWallSibling(dir, x, y))) {
-          sibling.classList.add('active');
+          //sibling.classList.add('active');
+          walls.push({
+            orientation: sibling.getAttribute('data-o'),
+            x: sibling.getAttribute('data-x'),
+            y: sibling.getAttribute('data-y')
+          });
         }
-        rect.classList.add('active');
+        //rect.classList.add('active');
 
-        socket.emit('wall', {player: PlayerID, orientation: dir, x, y});
+        // make the wall from the server
+        socket.emit('wall', {player: PlayerID, walls: walls});
+        isMyTurn = false;
       }
       removeHover();
     }, false);
@@ -206,13 +219,26 @@
     return pawn;
   }
 
+  function removeBoard() {
+    var 
+      svg = document.getElementById('game_board'),
+      container = document.getElementById('game_container');
+
+    if (svg) {
+      container.removeChild(svg);
+    }
+    return container;
+  }
+
   function createBoard(game) {
-    var old_svg,
+    if (!game || !game.gameState) {
+      return;
+    }
+    var
       size = Math.min(window.innerWidth, window.innerHeight) - 80,
-      container = document.getElementById('game_container'),
       svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'game_board';
-    svg.setAttribute('viewBox', '-.5 -.5 88.5 88.5');
+    svg.setAttribute('viewBox', '-.5 -.5 89 89');
     svg.setAttribute('width', size +'px');
     svg.setAttribute('height', size +'px');
 
@@ -232,36 +258,121 @@
       }
     }
 
-    // remove old svg#game_board if exists
-    if ((old_svg = document.getElementById('game_board'))) {
-      container.removeChild(old_svg);
-    }
-    // append new game board
-    container.appendChild(svg);
+    // remove old svg [if exists] and append new game board
+    removeBoard().appendChild(svg);
 
-    if (game) {
-      svg.appendChild(createPawn(game.gameStatus.pawns.p1.x, game.gameStatus.pawns.p1.y, 'p1'));
-      svg.appendChild(createPawn(game.gameStatus.pawns.p2.x, game.gameStatus.pawns.p2.y, 'p2'));
+    //# draw horizontal walls
+    for (var i = 0; i < game.gameState.walls.h.length; i++) {
+      document.getElementById(c_wall('h', game.gameState.walls.h[i].x, game.gameState.walls.h[i].y)).classList.add('active');
+    }
+
+    //# draw vertical walls
+    for (var i = 0; i < game.gameState.walls.v.length; i++) {
+      document.getElementById(c_wall('v', game.gameState.walls.v[i].x, game.gameState.walls.v[i].y)).classList.add('active');
+    }
+
+    //# draw pawns
+    svg.appendChild(createPawn(game.gameState.pawns.p1.x, game.gameState.pawns.p1.y, 'p1'));
+    svg.appendChild(createPawn(game.gameState.pawns.p2.x, game.gameState.pawns.p2.y, 'p2'));
+  }
+
+
+
+  function setInfoWalls(p1, p2) {
+    document.getElementById('p1_walls').innerHTML = 'Available Walls: <b>'+p1+'</b>';
+    document.getElementById('p2_walls').innerHTML = 'Available Walls: <b>'+p2+'</b>';
+  }
+
+  function setInfoActive(player) {
+    Array.from(document.querySelectorAll('.player_box')).forEach(function(box) {
+      box.classList.remove('active');
+      box.classList.remove('current');
+    });
+    var box = document.querySelector('.player_box.'+player);
+    box.classList.add('active');
+    if (isMyTurn) {
+      box.classList.add('current');
     }
   }
 
+  function setMessage(msg) {
+    document.getElementById('message').innerHTML = msg;
+  }
+
+  function setInfoTimer(removeTimer) {
+    if (TimerIV) clearInterval(TimerIV);
+    var time = 60,
+    elem = document.getElementById('timer');
+
+    if (removeTimer) {
+      elem.innerHTML = '';
+    }
+    else {
+      TimerIV = setInterval(() => {
+        time--;
+        if (time < 0) {
+          clearInterval(TimerIV);
+          // send timeout io
+          socket.emit('timeout', PlayerID);
+          return;
+        }
+        elem.innerHTML = time;
+      }, 1000);
+    }
+  }
+
+
   socket.emit('join');
+  
   socket.on('init', function (id) {
     PlayerID = id;
   });
 
-  socket.on('waiting', function () {
-    console.log('waiting for player to join the room');
+  socket.on('error', function (err) {
+    setMessage(err);
   });
 
-  socket.on('start', function (game) {  
-    isMyTurn = game.gameStatus.playerTurn === PlayerID;
+  socket.on('waiting', function (msg) {
+    // load spinner to inform user is waiting player two to join
+    setMessage(msg);
+  });
+
+  socket.on('start', function (game) {
+    if (game.error) {
+      return setInfoTimer(game.error);
+    }
+
+    isMyTurn = game.gameState.playerTurn === PlayerID;
+    document.getElementById('p1_name').innerHTML = game.gameState.playerName.p1;
+    document.getElementById('p2_name').innerHTML = game.gameState.playerName.p2;
+    setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
+    setInfoActive(game.gameState.playerTurn);
     createBoard(game);
+    setInfoTimer();
+    setMessage(game.message);
   });
 
   socket.on('update', function (game) {
-    isMyTurn = game.gameStatus.playerTurn === PlayerID;
+    if (game.error) {
+      return setInfoTimer(game.error);
+    }
+
+    isMyTurn = game.gameState.playerTurn === PlayerID;
+
+    setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
+    setInfoActive(game.gameState.playerTurn);
     createBoard(game);
+    setInfoTimer();
+    setMessage(game.message);
+  });
+
+  socket.on('end', function (message) {
+    setInfoTimer(true);
+    setMessage(message);
+    var a = document.createElement('a');
+    a.setAttribute('href', window.location.href);
+    a.innerHTML = 'Play again';
+    removeBoard().appendChild(a);
   });
 
 })();
