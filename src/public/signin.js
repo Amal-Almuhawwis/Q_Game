@@ -2,42 +2,44 @@
   if (!document.getElementById('page_signin')) return;
   
   var 
-    $form = document.getElementById('signin_form'),
-    $username = document.getElementById('username'),
-    $password = document.getElementById('password');
+    $signinForm = document.getElementById('signin_form'),
+    $usernameInp = document.getElementById('username'),
+    $passwordInp = document.getElementById('password');
 
-  $form.addEventListener('submit', function(e) {
+  $signinForm.addEventListener('submit', function(e) {
     e.preventDefault();
     var isValid = true;
 
-    if ($username.value.trim().length === 0) {
+    if ($usernameInp.value.trim().length === 0) {
       isValid = false;
-      $username.focus();
+      $usernameInp.classList.add('err');
+      $usernameInp.focus();
     }
-    else if ($password.value.trim().length === 0) {
+    else if ($passwordInp.value.trim().length === 0) {
       isValid = false;
-      $password.focus();
+      $passwordInp.classList.add('err');
+      $passwordInp.focus();
     }
 
     if (isValid) {
-      e.target.submit();
+      $signinForm.submit();
     }
   }, false);
 
-  $username.addEventListener('keyup', function(e) {
-    if ($username.value.trim().length === 0) {
-      $username.classList.add('err');
+  $usernameInp.addEventListener('keyup', function(e) {
+    if ($usernameInp.value.trim().length === 0) {
+      $usernameInp.classList.add('err');
     }
     else {
-      $username.classList.remove('err');
+      $usernameInp.classList.remove('err');
     }
   }, false);
-  $password.addEventListener('keyup', function(e) {
-    if ($password.value.trim().length === 0) {
-      $password.classList.add('err');
+  $passwordInp.addEventListener('keyup', function(e) {
+    if ($passwordInp.value.trim().length === 0) {
+      $passwordInp.classList.add('err');
     }
     else {
-      $password.classList.remove('err');
+      $passwordInp.classList.remove('err');
     }
   }, false);
 })();

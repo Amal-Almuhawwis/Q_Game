@@ -2,7 +2,8 @@
   if (!document.getElementById('page_board')) return;
 
   var 
-    PlayerID, isMyTurn, TimerIV,
+    PlayerID, isMyTurn, RemainingWalls, TimerIV,
+    TIMEOUT = 60,
     HAS_PAWN = 'has_pawn',
     HOVER = 'hov',
     SQUARE = 'square',
@@ -122,7 +123,7 @@
     // semulate hover effect
     rect.addEventListener('mouseenter', function(e){
       var sibling;
-      if (isMyTurn && !rect.classList.contains('active')) {
+      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
         if ((sibling = findWallSibling(dir, x, y))) {
           sibling.classList.add(HOVER);
         }
@@ -131,7 +132,7 @@
     }, false);
     rect.addEventListener('mouseleave', function(e){
       var sibling;
-      if (isMyTurn && !rect.classList.contains('active')) {
+      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
         if ((sibling = findWallSibling(dir, x, y))) {
           sibling.classList.remove(HOVER);
         }
@@ -143,7 +144,7 @@
     rect.addEventListener('click', function() {
       //TODO:: check if user can draw a wall first
       var sibling, walls;
-      if (isMyTurn && !rect.classList.contains('active')) {
+      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
         walls = [{orientation: dir, x: x, y: y}];
         if ((sibling = findWallSibling(dir, x, y))) {
           //sibling.classList.add('active');
@@ -301,7 +302,7 @@
 
   function setInfoTimer(removeTimer) {
     if (TimerIV) clearInterval(TimerIV);
-    var time = 60,
+    var time = TIMEOUT,
     elem = document.getElementById('timer');
 
     if (removeTimer) {
@@ -312,8 +313,11 @@
         time--;
         if (time < 0) {
           clearInterval(TimerIV);
-          // send timeout io
-          socket.emit('timeout', PlayerID);
+          // send timeout
+          // to let the server make a random move for the other player
+          if (!isMyTurn) {
+            socket.emit('timeout', PlayerID);
+          }
           return;
         }
         elem.innerHTML = time;
@@ -321,11 +325,18 @@
     }
   }
 
+  function updateGlobals(game) {
+    isMyTurn = game.gameState.playerTurn === PlayerID;
+    RemainingWalls = game.gameState.availableWalls[PlayerID];
+  }
+
 
   socket.emit('join');
   
-  socket.on('init', function (id) {
-    PlayerID = id;
+  socket.on('init', function (I) {
+    PlayerID = I.player;
+    TIMEOUT = I.timeout;
+    RemainingWalls = 6;
   });
 
   socket.on('error', function (err) {
@@ -342,7 +353,7 @@
       return setInfoTimer(game.error);
     }
 
-    isMyTurn = game.gameState.playerTurn === PlayerID;
+    updateGlobals(game);
     document.getElementById('p1_name').innerHTML = game.gameState.playerName.p1;
     document.getElementById('p2_name').innerHTML = game.gameState.playerName.p2;
     setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
@@ -357,7 +368,7 @@
       return setInfoTimer(game.error);
     }
 
-    isMyTurn = game.gameState.playerTurn === PlayerID;
+    updateGlobals(game);
 
     setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
     setInfoActive(game.gameState.playerTurn);
