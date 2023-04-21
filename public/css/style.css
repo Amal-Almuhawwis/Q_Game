@@ -152,15 +152,90 @@ a:hover{text-decoration:underline;}
 
 
 
+body{
+  height:100%;
+  -ms-overflow-y:scroll;
+  overflow-y:scroll;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: flex;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  -webkit-flex-direction:column;
+  -ms-flex-direction:column;
+  flex-direction:column;
+
+}
+
+main{
+  overflow:hidden;
+  -webkit-flex: 1 0 auto;
+  -ms-flex: 1 0 auto;
+  flex: 1 0 auto;
+  padding:0 2%;
+}
+
+header{
+  padding:10px 2%;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: flex;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  -webkit-flex-direction:row;
+  -ms-flex-direction:row;
+  flex-direction:row;
+}
+.header-links{
+  -webkit-flex: 1 0 auto;
+  -ms-flex: 1 0 auto;
+  flex: 1 0 auto;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-flex-direction:row-reverse;
+  -ms-flex-direction:row-reverse;
+  flex-direction:row-reverse;
+}
+.header-links a{
+  display:inline-block;
+  margin-right:8px;
+}
+.header-links a:first-child{
+  margin-right:0;
+}
+
+footer{
+  padding:5px 2%;
+}
+
+.logo{
+  display:inline-block;
+  font-size:24px;
+  font-weight:bold;
+  text-decoration:none;
+  outline:0 none;
+  color:#174ea6;
+}
+.logo:hover{
+  text-decoration:none;
+}
+
 /**
  * Project Css code
  */
 
 /*# Signin Page  */
-.form_container{
+.form_container, .button_container{
   width:80%;
-  max-width:600px;
-  margin:40px auto 0;
+  max-width:450px;
+  padding:24px;
+  margin:10px auto;
 }
 .form_container label{
   display:block;
@@ -169,23 +244,51 @@ a:hover{text-decoration:underline;}
 label > span{
   display:block;
   font-size:1em;
+  color: #3c4043;
 }
 .form_container .form_error{
   font-size:14px;
   color:red;
 }
-label > input{
+label > input, label > select{
+  display:block;
+  width:100%;
   padding:10px 24px;
+  border:1px solid #aaa;
+  color: #3c4043;
 }
-label > input:focus{
+label > input:focus, label > select:focus{
   outline:0 none;
 }
 
-.form_container input.err{
+input.err{
   border-color:red;
 }
 .error-box p{
   color:red;
+}
+
+label.form-action{
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  justify-content: space-between;
+  -webkit-flex-direction:row;
+  -ms-flex-direction:row;
+  flex-direction:row;
+}
+
+
+
+
+.game-box{
+  display:inline-block;
+  margin:5px;
+  padding:10px;
+  border:1px solid #aaa;
 }
 
 
@@ -246,4 +349,120 @@ svg rect.wall.hov, svg rect.square.hov{
 }
 #message, #timer{
   text-align:center;
+}
+
+
+
+
+
+
+table{
+  width:80%;
+  margin: 0 auto;
+}
+table td, table th{
+  border:1px solid #dee6ed;
+  background:transparent;
+  padding:.5em;
+  text-align:left;
+}
+table th{
+  cursor:default;
+}
+table tbody > tr:nth-child(odd) {background:#f4f7f9;}
+table tbody tr{
+  -webkit-transition:background-color 0.3s linear;
+  -moz-transition:background-color 0.3s linear;
+  transition:background-color 0.3s linear;
+}
+table tbody > tr:hover{background:rgba(0,0,0,.075);}
+
+
+
+
+
+
+
+/* https://getcssscan.com/css-buttons-examples */
+.button {
+  align-items: center;
+  text-decoration:none;
+  appearance: none;
+  background-color: #fff;
+  border-radius: 24px;
+  border-style: none;
+  box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,rgba(0, 0, 0, .14) 0 6px 10px 0,rgba(0, 0, 0, .12) 0 1px 18px 0;
+  box-sizing: border-box;
+  color: #3c4043;
+  cursor: pointer;
+  display: inline-flex;
+  fill: currentcolor;
+  font-family: "Google Sans",Roboto,Arial,sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 48px;
+  justify-content: center;
+  letter-spacing: .25px;
+  line-height: normal;
+  max-width: 100%;
+  overflow: visible;
+  padding: 2px 24px;
+  position: relative;
+  text-align: center;
+  text-transform: none;
+  transition: box-shadow 280ms cubic-bezier(.4, 0, .2, 1),opacity 15ms linear 30ms,transform 270ms cubic-bezier(0, 0, .2, 1) 0ms;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  width: auto;
+  will-change: transform,opacity;
+  z-index: 0;
+}
+
+.button:hover {
+  text-decoration:none;
+  background: #F6F9FE;
+  color: #174ea6;
+}
+
+.button:active {
+  box-shadow: 0 4px 4px 0 rgb(60 64 67 / 30%), 0 8px 12px 6px rgb(60 64 67 / 15%);
+  outline: none;
+}
+
+.button:focus {
+  outline: none;
+  border: 2px solid #4285f4;
+}
+
+.button:not(:disabled) {
+  box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
+}
+
+.button:not(:disabled):hover {
+  box-shadow: rgba(60, 64, 67, .3) 0 2px 3px 0, rgba(60, 64, 67, .15) 0 6px 10px 4px;
+}
+
+.button:not(:disabled):focus {
+  box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
+}
+
+.button:not(:disabled):active {
+  box-shadow: rgba(60, 64, 67, .3) 0 4px 4px 0, rgba(60, 64, 67, .15) 0 8px 12px 6px;
+}
+
+.button:disabled {
+  box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
+}
+
+
+
+
+.button_container a.button{
+  display:flex;
+  width:100%;
+  margin-bottom:10px;
+}
+.button_container a.button:last-child{
+  margin-bottom:0;
 }
