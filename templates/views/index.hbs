@@ -1,17 +1,39 @@
 {{>header}}
-<h1>Available Games</h1>
-{{#if games}}
-<form action="/game/join" method="post">
-{{#each games}}
-<button type="submit" name="game_id" value="{{this.id}}">{{this.game}}</button>
-{{/each}}
-</form>
-{{else}}
-<p>No available games.</p>
-{{/if}}
-<br /><hr />
-<form action="/game/create" method="post">
-  <input type="text" name="game" placeholder="Game" />
-  <input type="submit" value="Create Game" />
-</form>
+<div>
+  <h2>Join a Game</h2>
+  <form id="available_games_form" action="/game/join" method="post">
+  {{#each games}}
+    <div class="game-box">
+    <h3>{{this.gameName}}</h3>
+    <p>timeout: <b>{{this.timeout}}s</b></p>
+    <button type="submit" class="button" id="g_{{this.gameId}}" name="game_id" value="{{this.gameId}}">Join</button>
+  </div>
+  {{/each}}
+  </form>
+  <p id="no_games" style="display: {{#if games}}none{{else}}block{{/if}};">No available games.</p>
+</div>
+<div class="form_container">
+  <h2>Or Create new Game</h2>
+  <form id="create_game_form" action="/game/create" method="post">
+    <label>
+      <span>Game name</span>
+      <input type="text" id="inp_create_game" name="game" placeholder="Game" />
+    </label>
+    <label>
+      <span>Timeout Duration</span>
+      <select name="timeout">
+        <option value="60">60s</option>
+        <option value="50">50s</option>
+        <option value="40">40s</option>
+        <option value="30">30s</option>
+        <option value="20">20s</option>
+      </select>
+    </label>
+    <input type="submit" class="button" value="Create Game" />
+  </form>
+</div>
+<div class="button_container">
+  <a class="button block" href="/leaderboard">Leader Board</a>
+  <a class="button block" href="/game/history">Game History</a>
+</div>
 {{>footer}}
