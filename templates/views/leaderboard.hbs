@@ -1,0 +1,23 @@
+{{>header}}
+<h1>{{title}}</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Wins</th>
+      <th>Losses</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each users}}
+    <tr>
+      <td><b>{{this.username}}</b></td>
+      <td>{{this.wins}}</td>
+      <td>{{this.losses}}</td>
+      <td>{{this.total}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{>footer}}

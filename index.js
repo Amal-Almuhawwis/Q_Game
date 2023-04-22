@@ -6,7 +6,7 @@ const socketio = require('socket.io');
 const path = require('path');
 const hbs = require('hbs');
 const bcrypt = require('bcrypt');
-const {createGame, joinGame, getWaitingGamesList, setCurrentlyPlaying, makeMove, makeWall} = require('./lib/game');
+const {createGame, joinGame, getWaitingGamesList, setCurrentlyPlaying, makeMove, makeWall, AI_action} = require('./lib/game');
 
 const { UsersColl, GamesColl, ObjectId } = require('./lib/database');
 
@@ -84,6 +84,7 @@ app.get('/', async (req, res) => {
         req.session.player = game.private.players.playerOne === req.session.uid ? 'p1' : 'p2';
 
         res.render('board', {
+          authorized: true,
           page: "board"
         });
         return;
@@ -101,7 +102,8 @@ app.get('/', async (req, res) => {
     // user does not have an active game
     const games = await getWaitingGamesList();
     res.render('index', {
-      page: "home",
+      authorized: true,
+      page: "main",
       title: 'Game',
       games
     });
@@ -232,6 +234,8 @@ app.post('/game/join', async (req, res) => {
   if (req.session.uid && !req.session.gid) {
     const game_id = req.body.game_id.trim().toLowerCase();
     if (await joinGame(game_id, req.session.uid)) {
+      // 
+      io.sockets.emit('av_game_rm', game_id);
       req.session.gid = game_id;
       req.session.player = 'p2';
     }
@@ -244,10 +248,12 @@ app.post('/game/create', async (req, res) => {
   // create game only for signed in user who do not have an active game
   if (req.session.uid && !req.session.gid) {
     const game_name = req.body.game.trim().toLowerCase();
+    const timeout = req.body.timeout.trim();
     // check if game name is valid string
-    if (/^[A-Z0-9_]{2,20}$/i.test(game_name)) {
-      const game = await createGame(game_name, req.session.uid);
+    if (/^[A-Z0-9_]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
+      const game = await createGame(game_name, req.session.uid, +timeout);
       if (game && !game.error) {
+        io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName});
         req.session.player = 'p1';
         req.session.gid = game.public.gameId;
       }
@@ -255,6 +261,62 @@ app.post('/game/create', async (req, res) => {
   }
 
   res.redirect('/');
+});
+
+app.get('/leaderboard', async (req, res) => {
+  if (!req.session.uid) {
+    res.redirect('/signin');
+    return;
+  }
+
+  let I = [];
+  const allUsers = await UsersColl.find().toArray();
+  for (let i = 0; i < allUsers.length; i++) {
+    let info = {
+      username: allUsers[i].username
+    };
+
+    info.total = await GamesColl.countDocuments({
+      $or: [
+        {'private.players.playerOne': allUsers[i]._id.toHexString()},
+        {'private.players.playerTwo': allUsers[i]._id.toHexString()}
+      ]
+    });
+    info.wins = await GamesColl.countDocuments({'public.gameState.winner': allUsers[i].username});
+    info.losses = info.total - info.wins;
+    I.push(info);
+  }
+
+  // sort descending
+  I.sort((a, b) => a.total > b.total ? -1 : (a.total < b.total ? 1 : 0) );
+
+  res.render('leaderboard', {
+    authorized: true,
+    page: 'leaderboard',
+    title: 'Leader Board',
+    users: I
+  })
+});
+
+app.get('/game/history', async (req, res) => {
+  if (!req.session.uid) {
+    res.redirect('/signin');
+    return;
+  }
+
+  const U = await UsersColl.find({_id: new ObjectId(req.session.uid)});
+  if (!U) {
+    res.redirect('/signin');
+    return;
+  }
+
+
+  res.render('history', {
+    authorized: true,
+    page: 'history',
+    title: 'Game History',
+    player: U.username
+  });
 });
 
 
@@ -283,7 +345,7 @@ io.on('connection', async (socket) => {
     socket.join(sess.gid);
 
     // send the id [p1|p2] to the joined user
-    socket.emit('init', sess.player);
+    socket.emit('init', {player: sess.player, timeout: g.public.timeout});
 
 
     // two players is ready to play the game
@@ -315,14 +377,27 @@ io.on('connection', async (socket) => {
     io.to(sess.gid).emit('update', g.error ? g : g.public);
   });
 
-  socket.on('timeout', async (player) => {
-    // make an AI move and update
+  socket.on('timeout', async (otherPlayerId) => {
+    const playerId = 'p1' === otherPlayerId ? 'p2': 'p1';
+    const g = await AI_action(sess.gid, playerId);
+
+    if (g.error) {
+      socket.emit('error', g.error);
+      return;
+    }
+
+    if (0 !== g.public.gameState.winner) {
+      io.to(sess.gid).emit('end', g.public.message);
+    }
+    else {
+      io.to(sess.gid).emit('update', g.public);
+    }
   });
 
 
   // socket user is disconnected
   socket.on('disconnect', () => {
-    console.log('user disconnected', sess);
+
   });
 });
 
