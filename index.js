@@ -6,10 +6,7 @@ const socketio = require('socket.io');
 const path = require('path');
 const hbs = require('hbs');
 const User = require('./lib/user');
-const {createGame, joinGame, getWaitingGamesList, setCurrentlyPlaying, makeMove, makeWall, AI_action} = require('./lib/game');
-
-const { GamesColl, ObjectId } = require('./lib/database');
-
+const Game = require('./lib/game');
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
@@ -76,7 +73,7 @@ app.get('/', async (req, res) => {
 
     // user have an active game
     if (U.currentlyPlaying !== 0) {
-      const game = await GamesColl.findOne({_id: new ObjectId(U.currentlyPlaying)});
+      const game = await Game.find(U.currentlyPlaying);
       // game exists, and does not have a winner
       if (game && game.public.gameState.winner === 0) {
         // save game information in the session
@@ -91,7 +88,7 @@ app.get('/', async (req, res) => {
       }
       else {
         // remove currentlyPlaying from user
-        await setCurrentlyPlaying(req.session.uid, 0);
+        await User.setCurrentlyPlaying(req.session.uid, 0);
       }
     }
 
@@ -100,7 +97,7 @@ app.get('/', async (req, res) => {
 
 
     // user does not have an active game
-    const games = await getWaitingGamesList();
+    const games = await Game.getWaitingList();
     res.render('index', {
       authorized: true,
       page: "main",
@@ -225,7 +222,7 @@ app.post('/signup', async (req, res) => {
 app.post('/game/join', async (req, res) => {
   if (req.session.uid && !req.session.gid) {
     const game_id = req.body.game_id.trim().toLowerCase();
-    if (await joinGame(game_id, req.session.uid)) {
+    if (await Game.join(game_id, req.session.uid)) {
       // 
       io.sockets.emit('av_game_rm', game_id);
       req.session.gid = game_id;
@@ -243,7 +240,7 @@ app.post('/game/create', async (req, res) => {
     const timeout = req.body.timeout.trim();
     // check if game name is valid string
     if (/^[A-Z0-9_ \-]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
-      const game = await createGame(game_name, req.session.uid, +timeout);
+      const game = await Game.create(game_name, req.session.uid, +timeout);
       if (game && !game.error) {
         io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName, timeout: game.public.timeout});
         req.session.player = 'p1';
@@ -268,13 +265,13 @@ app.get('/leaderboard', async (req, res) => {
       username: allUsers[i].username
     };
 
-    info.total = await GamesColl.countDocuments({
+    info.total = await Game.count({
       $or: [
         {'private.players.playerOne': allUsers[i]._id.toHexString()},
         {'private.players.playerTwo': allUsers[i]._id.toHexString()}
       ]
     });
-    info.wins = await GamesColl.countDocuments({'public.gameState.winner': allUsers[i].username});
+    info.wins = await Game.count({'public.gameState.winner': allUsers[i].username});
     info.losses = info.total - info.wins;
     I.push(info);
   }
@@ -328,7 +325,7 @@ io.on('connection', async (socket) => {
 
   
   socket.on('join', async () => {
-    const g = await GamesColl.findOne({_id: new ObjectId(sess.gid)});
+    const g = await Game.find(sess.gid);
     if (!g) {
       return;
     }
@@ -349,7 +346,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('move', async ({player, x, y}) => {
-    const g = await makeMove(sess.gid, player, x, y);
+    const g = await Game.makeMove(sess.gid, player, x, y);
     if (g.error) {
       socket.emit('error', g.error);
       return;
@@ -364,13 +361,13 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('wall', async ({player, walls}) => {
-    const g = await makeWall(sess.gid, player, walls);
+    const g = await Game.makeWall(sess.gid, player, walls);
     io.to(sess.gid).emit('update', g.error ? g : g.public);
   });
 
   socket.on('timeout', async (otherPlayerId) => {
     const playerId = 'p1' === otherPlayerId ? 'p2': 'p1';
-    const g = await AI_action(sess.gid, playerId);
+    const g = await Game.aiAction(sess.gid, playerId);
 
     if (g.error) {
       socket.emit('error', g.error);
