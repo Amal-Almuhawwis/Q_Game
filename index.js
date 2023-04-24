@@ -5,10 +5,10 @@ const bodyParser = require('body-parser');
 const socketio = require('socket.io');
 const path = require('path');
 const hbs = require('hbs');
-const bcrypt = require('bcrypt');
+const User = require('./lib/user');
 const {createGame, joinGame, getWaitingGamesList, setCurrentlyPlaying, makeMove, makeWall, AI_action} = require('./lib/game');
 
-const { UsersColl, GamesColl, ObjectId } = require('./lib/database');
+const { GamesColl, ObjectId } = require('./lib/database');
 
 const app = express();
 const server = http.createServer(app);
@@ -62,7 +62,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.get('/', async (req, res) => {
   // check if user is signed in
   if (req.session.uid) {
-    const U = await UsersColl.findOne({_id: new ObjectId(req.session.uid)});
+    const U = await User.find(req.session.uid);
     // confirm user info
     if (!U) {
       // reset session information
@@ -149,13 +149,8 @@ app.post('/signin', async (req, res) => {
   }
   
   if (isValidUsername && isValidPassword) {
-    //# fetch user information from database
-    // uid is the user ID from the database
-    const U = await UsersColl.findOne({username});
-    if (U && bcrypt.compareSync(password, U.password)) {
-      // sign user in
-      req.session.uid = U._id.toHexString();
-      // redirect to game page
+    // User.signin will return uid or null;
+    if ((req.session.uid = await User.signin(username, password))) {
       res.redirect('/');
       return;
     }
@@ -189,18 +184,15 @@ app.post('/signup', async (req, res) => {
   let isValidRePassword = password === re_password;
 
   if (isValidUsername && isValidPassword && isValidRePassword) {
-    const user = await UsersColl.findOne({username: username});
-    if (!user) {
-      const hash = bcrypt.hashSync(password, 10);
-      const result = await UsersColl.insertOne({username, password: hash, currentlyPlaying: 0});
-      if (result.insertedId) {
-        // redirecto to signin page
-        //res.redirect('/signin');
-
-        // auto signin with username
-        req.session.uid = result.insertedId.toHexString();
+    if (!(await User.exists(username))) {
+      const id = await User.create(username, password);
+      if (id) {
+        req.session.uid = id.toHexString();
         res.redirect('/');
         return;
+      }
+      else {
+        errors.push('failed to create new user, please try again later.');
       }
     }
     else {
@@ -250,10 +242,10 @@ app.post('/game/create', async (req, res) => {
     const game_name = req.body.game.trim().toLowerCase();
     const timeout = req.body.timeout.trim();
     // check if game name is valid string
-    if (/^[A-Z0-9_]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
+    if (/^[A-Z0-9_ \-]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
       const game = await createGame(game_name, req.session.uid, +timeout);
       if (game && !game.error) {
-        io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName});
+        io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName, timeout: game.public.timeout});
         req.session.player = 'p1';
         req.session.gid = game.public.gameId;
       }
@@ -270,7 +262,7 @@ app.get('/leaderboard', async (req, res) => {
   }
 
   let I = [];
-  const allUsers = await UsersColl.find().toArray();
+  const allUsers = await User.getAll();
   for (let i = 0; i < allUsers.length; i++) {
     let info = {
       username: allUsers[i].username
@@ -304,12 +296,11 @@ app.get('/game/history', async (req, res) => {
     return;
   }
 
-  const U = await UsersColl.find({_id: new ObjectId(req.session.uid)});
+  const U = await User.find(req.session.uid);
   if (!U) {
     res.redirect('/signin');
     return;
   }
-
 
   res.render('history', {
     authorized: true,
