@@ -293,18 +293,51 @@ app.get('/game/history', async (req, res) => {
     return;
   }
 
-  const U = await User.find(req.session.uid);
-  if (!U) {
+  const gamesPlayed = await User.getGamesPlayed(req.session.uid);
+  if (gamesPlayed.error) {
+    req.session.uid = null;
     res.redirect('/signin');
     return;
   }
+
 
   res.render('history', {
     authorized: true,
     page: 'history',
     title: 'Game History',
-    player: U.username
+    player: gamesPlayed.username,
+    list: gamesPlayed.list
   });
+});
+
+app.get('/game/history/playback', async (req, res) => {
+  if (!req.session.uid) {
+    res.redirect('/signin');
+    return;
+  }
+
+  let g;
+  // query parameter does not exists
+  if (!req.query.g || 
+      // invalid query param
+      !/^[0-9A-F]{24}$/i.test(req.query.g) ||
+      // game does not exists
+      !(g = await Game.find(req.query.g)) || 
+      // current player does not belong to the selected game
+      [g.private.players.playerOne, g.private.players.playerTwo].indexOf(req.session.uid) === -1) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  
+  res.render('board', {
+    authorized: true,
+    page: 'board',
+    title: 'Game PlayBack',
+    gameId: g.public.gameId,
+    playback: true
+  });
+
 });
 
 
@@ -319,6 +352,25 @@ app.get('*', (req, res) => {
 
 io.on('connection', async (socket) => {
   const sess = socket.request.session;
+
+  if (sess.uid) {
+    socket.on('playback-join', async (gid) => {
+      if (!/^[0-9A-F]{24}$/i.test(gid)) {
+        console.log('invalid gid')
+        return;
+      }
+  
+      const g = await Game.find(gid);
+      if (!g || -1 === [g.private.players.playerOne, g.private.players.playerTwo].indexOf(sess.uid)) {
+        console.log('not a game')
+        return;
+      }
+  
+  
+      socket.emit('playback-start', g.public);
+    });
+  }
+
   if (!sess || !sess.uid || !sess.gid || !sess.player) {
     return;
   }
@@ -381,7 +433,6 @@ io.on('connection', async (socket) => {
       io.to(sess.gid).emit('update', g.public);
     }
   });
-
 
   // socket user is disconnected
   socket.on('disconnect', () => {

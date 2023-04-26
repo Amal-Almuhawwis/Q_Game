@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "uglifyjs node_modules/socket.io/client-dist/socket.io.js src/public/board.js src/public/main.js src/public/signin.js src/public/signup.js -o public/js/script.min.js --compress drop_console=false --mangle toplevel=true",
+    "build": "uglifyjs node_modules\\socket.io\\client-dist\\socket.io.js src\\public\\board.js src\\public\\main.js src\\public\\signin.js src\\public\\signup.js -o public\\js\\script.min.js --compress drop_console=false --mangle toplevel=true",
     "dev": "nodemon -e js,hbs index"
   },
   "author": "",

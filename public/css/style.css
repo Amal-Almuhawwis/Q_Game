@@ -335,10 +335,10 @@ svg rect.wall.hov, svg rect.square.hov{
 .player_box{
   padding:10px;
 }
-.player_box.p1 h3{
+#p1_name{
   color:blue;
 }
-.player_box.p2 h3{
+#p2_name{
   color:red;
 }
 .player_box.active{

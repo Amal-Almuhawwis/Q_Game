@@ -1,3 +1,21 @@
 {{>header}}
 <h1>Game History for {{player}}</h1>
+<table>
+  <thead>
+    <tr>
+    <th>Game Name</th>
+    <th>Win/Loss</th>
+    <th>-</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each list}}
+    <tr>
+      <td>{{this.gameName}}</td>
+      <td>{{this.status}}</td>
+      <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a></td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
 {{>footer}}

@@ -1,8 +1,7 @@
 {{>header}}
 <div class="players">
   <div class="player_box p1">
-    <h3>Player 1</h3>
-    <p id="p1_name"></p>
+    <h3 id="p1_name">Player 1</h3>
     <p id="p1_walls"></p>
   </div>
   <div>
@@ -10,10 +9,9 @@
     <p id="message"></p>
   </div>
   <div class="player_box p2">
-    <h3>Player 2</h3>
-    <p id="p2_name"></p>
+    <h3 id="p2_name">Player 2</h3>
     <p id="p2_walls"></p>
   </div>
 </div>
-<div id="game_container"></div>
+<div id="game_container"{{#if playback}} class="playback-mode" data-gid="{{gameId}}"{{/if}}></div>
 {{>footer}}

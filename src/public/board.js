@@ -3,6 +3,8 @@
 
   var 
     PlayerID, isMyTurn, RemainingWalls, TimerIV,
+    $gameContainer = document.getElementById('game_container'),
+    isPlayBackMode = document.getElementsByClassName('playback-mode').length === 1 && $gameContainer && $gameContainer.getAttribute('data-gid'),
     TIMEOUT = 60,
     HAS_PAWN = 'has_pawn',
     HOVER = 'hov',
@@ -222,13 +224,26 @@
 
   function removeBoard() {
     var 
-      svg = document.getElementById('game_board'),
-      container = document.getElementById('game_container');
+      svg = document.getElementById('game_board');
 
     if (svg) {
-      container.removeChild(svg);
+      $gameContainer.removeChild(svg);
     }
-    return container;
+  }
+
+  function setSVGDimen(svg) {
+    svg = svg || document.getElementById('game_board');
+    if (!svg) return;
+    var 
+      size = Math.min(window.innerWidth, window.innerHeight) - 40,
+      header = document.getElementsByTagName('header')[0];
+
+    if (header) {
+      size -= header.clientHeight;
+    }
+
+    svg.setAttribute('width', size + 'px');
+    svg.setAttribute('height', size + 'px');
   }
 
   function createBoard(game) {
@@ -236,12 +251,9 @@
       return;
     }
     var
-      size = Math.min(window.innerWidth, window.innerHeight) - 80,
       svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'game_board';
     svg.setAttribute('viewBox', '-.5 -.5 89 89');
-    svg.setAttribute('width', size +'px');
-    svg.setAttribute('height', size +'px');
 
     // build the board
     for (var x = 0; x < 9; x++) {
@@ -260,7 +272,10 @@
     }
 
     // remove old svg [if exists] and append new game board
-    removeBoard().appendChild(svg);
+    removeBoard();
+    $gameContainer.appendChild(svg);
+
+    setSVGDimen(svg);
 
     //# draw horizontal walls
     for (var i = 0; i < game.gameState.walls.h.length; i++) {
@@ -289,8 +304,10 @@
       box.classList.remove('active');
       box.classList.remove('current');
     });
-    var box = document.querySelector('.player_box.'+player);
-    box.classList.add('active');
+    var box = document.querySelectorAll('.player_box.'+player)[0];
+    if (box) {
+      box.classList.add('active');
+    }
     if (isMyTurn) {
       box.classList.add('current');
     }
@@ -331,59 +348,119 @@
   }
 
 
-  socket.emit('join');
+  if (isPlayBackMode) {
+
+    socket.emit('playback-join', $gameContainer.getAttribute('data-gid'));
+
+    socket.on('playback-start', function (g) {
+      var H = g.gameState.history, i = 0;
+      
+      setMessage('PlayBack for: <b>'+g.gameName+'</b>');
+      TIMEOUT = 5;
+
+      // reset game
+      g.gameState.walls.v = [];
+      g.gameState.walls.h = [];
+      g.gameState.availableWalls.p1 = 6;
+      g.gameState.availableWalls.p2 = 6;
+      g.gameState.pawns.p1 = {x: 0, y: 4};
+      g.gameState.pawns.p2 = {x: 8, y: 4};
+
+      document.getElementById('p1_name').innerHTML = g.gameState.playerName.p1;
+      document.getElementById('p2_name').innerHTML = g.gameState.playerName.p2;
+
+      function play() {
+        var I = H[i];
+        if (I) {
+          switch(I.action) {
+            case 'move':
+              g.gameState.pawns[I.player].x = I.x;
+              g.gameState.pawns[I.player].y = I.y;
+              break;
+            case 'wall':
+              g.gameState.availableWalls[I.player]--;
+              g.gameState.walls[I.orientation].push({
+                x: I.x,
+                y: I.y
+              });
+              break;
+          }
+          isMyTurn = false;
+          setInfoWalls(g.gameState.availableWalls.p1, g.gameState.availableWalls.p2);
+          setInfoActive(I.player);
+          setInfoTimer();
+          createBoard(g);
+          setTimeout(play, TIMEOUT * 1000);
+        }
+        else {
+          setInfoTimer(true);
+          setMessage('<b>'+g.gameState.winner+'</b> won the game.');
+        }
+        i++;
+      }
+      play();
+    });
+
+  }
+  else {
+
+    socket.emit('join');
   
-  socket.on('init', function (I) {
-    PlayerID = I.player;
-    TIMEOUT = I.timeout;
-    RemainingWalls = 6;
-  });
+    socket.on('init', function (I) {
+      PlayerID = I.player;
+      TIMEOUT = I.timeout;
+      RemainingWalls = 6;
+    });
+  
+    socket.on('error', function (err) {
+      setMessage(err);
+    });
+  
+    socket.on('waiting', function (msg) {
+      // load spinner to inform user is waiting player two to join
+      setMessage(msg);
+    });
+  
+    socket.on('start', function (game) {
+      if (game.error) {
+        return setInfoTimer(game.error);
+      }
+  
+      updateGlobals(game);
+      document.getElementById('p1_name').innerHTML = game.gameState.playerName.p1;
+      document.getElementById('p2_name').innerHTML = game.gameState.playerName.p2;
+      setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
+      setInfoActive(game.gameState.playerTurn);
+      createBoard(game);
+      setInfoTimer();
+      setMessage(game.message);
+    });
+  
+    socket.on('update', function (game) {
+      if (game.error) {
+        return setInfoTimer(game.error);
+      }
+  
+      updateGlobals(game);
+  
+      setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
+      setInfoActive(game.gameState.playerTurn);
+      createBoard(game);
+      setInfoTimer();
+      setMessage(game.message);
+    });
+  
+    socket.on('end', function (message) {
+      setInfoTimer(true);
+      setMessage(message);
+      var a = document.createElement('a');
+      a.setAttribute('href', window.location.href);
+      a.innerHTML = 'Play again';
+      removeBoard();
+      $gameContainer.appendChild(a);
+    });
+  
+  }
 
-  socket.on('error', function (err) {
-    setMessage(err);
-  });
-
-  socket.on('waiting', function (msg) {
-    // load spinner to inform user is waiting player two to join
-    setMessage(msg);
-  });
-
-  socket.on('start', function (game) {
-    if (game.error) {
-      return setInfoTimer(game.error);
-    }
-
-    updateGlobals(game);
-    document.getElementById('p1_name').innerHTML = game.gameState.playerName.p1;
-    document.getElementById('p2_name').innerHTML = game.gameState.playerName.p2;
-    setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
-    setInfoActive(game.gameState.playerTurn);
-    createBoard(game);
-    setInfoTimer();
-    setMessage(game.message);
-  });
-
-  socket.on('update', function (game) {
-    if (game.error) {
-      return setInfoTimer(game.error);
-    }
-
-    updateGlobals(game);
-
-    setInfoWalls(game.gameState.availableWalls.p1, game.gameState.availableWalls.p2);
-    setInfoActive(game.gameState.playerTurn);
-    createBoard(game);
-    setInfoTimer();
-    setMessage(game.message);
-  });
-
-  socket.on('end', function (message) {
-    setInfoTimer(true);
-    setMessage(message);
-    var a = document.createElement('a');
-    a.setAttribute('href', window.location.href);
-    a.innerHTML = 'Play again';
-    removeBoard().appendChild(a);
-  });
 
 })();
