@@ -334,6 +334,7 @@ svg rect.wall.hov, svg rect.square.hov{
 }
 .player_box{
   padding:10px;
+  border:2px solid transparent;
 }
 #p1_name{
   color:blue;

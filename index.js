@@ -352,28 +352,27 @@ app.get('*', (req, res) => {
 
 io.on('connection', async (socket) => {
   const sess = socket.request.session;
+  if (!sess || !sess.uid) return;
 
-  if (sess.uid) {
-    socket.on('playback-join', async (gid) => {
-      if (!/^[0-9A-F]{24}$/i.test(gid)) {
-        console.log('invalid gid')
-        return;
-      }
-  
-      const g = await Game.find(gid);
-      if (!g || -1 === [g.private.players.playerOne, g.private.players.playerTwo].indexOf(sess.uid)) {
-        console.log('not a game')
-        return;
-      }
-  
-  
-      socket.emit('playback-start', g.public);
-    });
-  }
+  // playback will not require an active game in session variable
+  socket.on('playback-join', async (gid) => {
+    if (!/^[0-9A-F]{24}$/i.test(gid)) {
+      console.log('invalid gid')
+      return;
+    }
 
-  if (!sess || !sess.uid || !sess.gid || !sess.player) {
-    return;
-  }
+    const g = await Game.find(gid);
+    if (!g || -1 === [g.private.players.playerOne, g.private.players.playerTwo].indexOf(sess.uid)) {
+      console.log('not a game')
+      return;
+    }
+
+
+    socket.emit('playback-start', g.public);
+  });
+
+  // game play will require an active game in session variable
+  if (!sess.gid || !sess.player) return;
 
   
   socket.on('join', async () => {
@@ -400,7 +399,7 @@ io.on('connection', async (socket) => {
   socket.on('move', async ({player, x, y}) => {
     const g = await Game.makeMove(sess.gid, player, x, y);
     if (g.error) {
-      socket.emit('error', g.error);
+      socket.emit('invalid', {error: g.error, player});
       return;
     }
 
@@ -412,8 +411,8 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('wall', async ({player, walls}) => {
-    const g = await Game.makeWall(sess.gid, player, walls);
+  socket.on('wall', async ({player, wall}) => {
+    const g = await Game.makeWall(sess.gid, player, wall);
     io.to(sess.gid).emit('update', g.error ? g : g.public);
   });
 
@@ -450,6 +449,8 @@ server.listen(PORT, () => {
 
 
 
+//# Game Rules
+//  https://en.wikipedia.org/wiki/Quoridor
 
 //# HBS helpers
 //  https://handlebarsjs.com/guide/builtin-helpers.html

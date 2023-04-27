@@ -52,26 +52,7 @@
     rect.setAttribute('stroke-width', '.5');
     rect.classList.add(SQUARE);
     rect.addEventListener('click', function(e) {
-      var pawn, player, pawn_x, pawn_y;
-      //TODO:: check if user is allowed to make a move
-      // move the pawn if click on an active(has hover) rect
       if (isMyTurn && rect.classList.contains(HOVER) && (player = rect.getAttribute('data-player'))) {
-        // pawn = document.getElementById(player);
-        // // find pawn current position
-        // pawn_x = +pawn.getAttribute('data-x');
-        // pawn_y = +pawn.getAttribute('data-y');
-
-        // // remove has_pawn from current pawn square
-        // document.getElementById(c_square(pawn_x, pawn_y)).classList.remove(HAS_PAWN);
-
-        // // set the new pawn position
-        // pawn.setAttribute('data-x', x);
-        // pawn.setAttribute('data-y', y);
-        // // move the pawn to the new position
-        // pawn.setAttribute('cx', x * 10 + 4);
-        // pawn.setAttribute('cy', y * 10 + 4);
-        // rect.classList.add(HAS_PAWN);
-
         // make the move from the server
         socket.emit('move', {player: PlayerID, x, y});
         isMyTurn = false;
@@ -83,29 +64,63 @@
     return rect;
   }
 
+  // check if horizontal wall intersect with a vertical wall or viceversa
+  function isWallIntersecting(dir, x, y) {
+    var elem1, elem2;
+    if (VERTICAL === dir) {
+      if ((elem1 = document.getElementById(c_wall('h', x, y))) && 
+          (elem2 = document.getElementById(c_wall('h', x + 1, y))) &&
+          elem1.classList.contains('active') &&
+          elem2.classList.contains('active')) {
+        return true;
+      }
+    }
+    else {
+      if ((elem1 = document.getElementById(c_wall('v', x, y))) && 
+          (elem2 = document.getElementById(c_wall('v', x, y + 1))) &&
+          elem1.classList.contains('active') &&
+          elem2.classList.contains('active')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // find the wall sibling,
-  // if current wall at the end will return the previous one
-  function findWallSibling(dir, pos_x, pos_y) {
-    var sibling;
+  // if current wall at the end will detect the previous one
+  // method will return ordered by place pair of walls [rect0, rect1] or null
+  function findWallSibling(dir, pos_x, pos_y, rect) {
+    var sibling, isBefore = false, x = pos_x, y = pos_y;
     if (VERTICAL === dir) {
       // find next available wall
       sibling = document.getElementById( c_wall(VERTICAL, pos_x, pos_y + 1));
       // check if wall exists, and is not active
-      if (!sibling || sibling.classList.contains('active')) {
+      if (!sibling || sibling.classList.contains('active') || isWallIntersecting(dir, x, y)) {
         sibling = document.getElementById( c_wall(VERTICAL, pos_x, pos_y -1));
+        y--;
+        isBefore = true;
       }
     }
     else {
       sibling = document.getElementById(c_wall(HORIZONTAL, pos_x + 1, pos_y));
-      if (!sibling || sibling.classList.contains('active')) {
+      if (!sibling || sibling.classList.contains('active') || isWallIntersecting(dir, x, y)) {
         sibling = document.getElementById(c_wall(HORIZONTAL, pos_x - 1, pos_y));
+        x--;
+        isBefore = true;
       }
     }
     // make sure to not apply hover to an active wall
-    if (sibling && sibling.classList.contains('active')) {
+    if (sibling && (sibling.classList.contains('active') || isWallIntersecting(dir, x, y))) {
       sibling = null;
     }
-    return sibling;
+
+    if (sibling) {
+      if (isBefore) {
+        return [sibling, rect];
+      }
+      return [rect, sibling];
+    }
+    return null;
   }
 
   // create a gap between squares, to draw walls on it
@@ -124,42 +139,42 @@
 
     // semulate hover effect
     rect.addEventListener('mouseenter', function(e){
-      var sibling;
-      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
-        if ((sibling = findWallSibling(dir, x, y))) {
-          sibling.classList.add(HOVER);
-        }
-        rect.classList.add(HOVER);
+      var Rs;
+      if (isMyTurn && RemainingWalls > 0 && 
+        // current wallPlace is not assigned
+        !rect.classList.contains('active') && 
+        // find sibling and order with current rect
+        (Rs = findWallSibling(dir, x, y, rect))) {
+
+        Rs[0].classList.add(HOVER);
+        Rs[1].classList.add(HOVER);
       }
     }, false);
     rect.addEventListener('mouseleave', function(e){
-      var sibling;
-      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
-        if ((sibling = findWallSibling(dir, x, y))) {
-          sibling.classList.remove(HOVER);
-        }
-        rect.classList.remove(HOVER);
+      var Rs;
+      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active') && (Rs = findWallSibling(dir, x, y, rect))) {
+        Rs[0].classList.remove(HOVER);
+        Rs[1].classList.remove(HOVER);
       }
     }, false);
 
     // draw the wall if applicable
     rect.addEventListener('click', function() {
       //TODO:: check if user can draw a wall first
-      var sibling, walls;
-      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active')) {
-        walls = [{orientation: dir, x: x, y: y}];
-        if ((sibling = findWallSibling(dir, x, y))) {
-          //sibling.classList.add('active');
-          walls.push({
-            orientation: sibling.getAttribute('data-o'),
-            x: sibling.getAttribute('data-x'),
-            y: sibling.getAttribute('data-y')
-          });
-        }
-        //rect.classList.add('active');
+      var Rs, wall;
+      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active') && (Rs = findWallSibling(dir, x, y, rect))) {
+        wall = {
+          orientation: dir,
+          // first item x
+          x: +Rs[0].getAttribute('data-x'),
+          // first item y
+          y: +Rs[0].getAttribute('data-y'),
+          // second item x|y [h|v]
+          w: +Rs[1].getAttribute('data-' + (VERTICAL === dir ? 'y': 'x'))
+        };
 
         // make the wall from the server
-        socket.emit('wall', {player: PlayerID, walls: walls});
+        socket.emit('wall', {player: PlayerID, wall: wall});
         isMyTurn = false;
       }
       removeHover();
@@ -185,35 +200,75 @@
     pawn.addEventListener('click', function() {
       if (!isMyTurn || PlayerID !== player) return;
 
-      var sibling, wall,
+      var sibling, wall, _x, _y,
         x = +pawn.getAttribute('data-x'),
         y = +pawn.getAttribute('data-y');
+
+
       //# top
-      if ((sibling = document.getElementById( c_square(x, y -1))) && !sibling.classList.contains(HAS_PAWN)) {
-        if (!(wall = document.getElementById(c_wall(HORIZONTAL, x, y -1))) || !wall.classList.contains('active')) {
-          sibling.classList.add(HOVER);
-          sibling.setAttribute('data-player', player);
+      _x = x;
+      _y = y - 1;
+      if ((sibling = document.getElementById( c_square(_x, _y)))) {
+        // top square contains the other player pawns
+        if (sibling.classList.contains(HAS_PAWN)) {
+          _y = y - 2;
+          sibling = document.getElementById(c_square(_x, _y));
+        }
+
+        if (sibling) {
+          if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x, _y))) || !wall.classList.contains('active')) {
+            sibling.classList.add(HOVER);
+            sibling.setAttribute('data-player', player);
+          }
         }
       }
-      //# right
-      if ((sibling = document.getElementById(c_square(x + 1, y))) && !sibling.classList.contains(HAS_PAWN)) {
-        if (!(wall = document.getElementById(c_wall(VERTICAL, x, y))) || !wall.classList.contains('active')) {
-          sibling.classList.add(HOVER);
-          sibling.setAttribute('data-player', player);
-        }
-      }
+
       //# bottom
-      if ((sibling = document.getElementById(c_square(x, y + 1))) && !sibling.classList.contains(HAS_PAWN)) {
-        if (!(wall = document.getElementById(c_wall(HORIZONTAL, x, y))) || !wall.classList.contains('active')) {
-          sibling.classList.add(HOVER);
-          sibling.setAttribute('data-player', player);
+      _x = x;
+      _y = y + 1;
+      if ((sibling = document.getElementById(c_square(_x, _y)))) {
+        if (sibling.classList.contains(HAS_PAWN)) {
+          _y = y + 2;
+          sibling = document.getElementById(c_square(_x, _y));
+        }
+        if (sibling) {
+          if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x, _y - 1))) || !wall.classList.contains('active')) {
+            sibling.classList.add(HOVER);
+            sibling.setAttribute('data-player', player);
+          }
         }
       }
+
+      //# right
+      _x = x + 1;
+      _y = y;
+      if ((sibling = document.getElementById(c_square(_x, _y)))) {
+        if (sibling.classList.contains(HAS_PAWN)) {
+          _x = x + 2;
+          sibling = document.getElementById(c_square(_x, _y));
+        }
+        if (sibling) {
+          if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) || !wall.classList.contains('active')) {
+            sibling.classList.add(HOVER);
+            sibling.setAttribute('data-player', player);
+          }
+        }
+      }
+
       //# left
-      if ((sibling = document.getElementById(c_square(x - 1, y))) && !sibling.classList.contains(HAS_PAWN)) {
-        if (!(wall = document.getElementById(c_wall(VERTICAL, x-1, y))) || !wall.classList.contains('active')) {
-          sibling.classList.add(HOVER);
-          sibling.setAttribute('data-player', player);
+      _x = x - 1;
+      _y = y;
+      if ((sibling = document.getElementById(c_square(_x, _y)))) {
+        if (sibling.classList.contains(HAS_PAWN)) {
+          _x = x - 2;
+          sibling = document.getElementById(c_square(_x, _y));
+        }
+
+        if (sibling) {
+          if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y))) || !wall.classList.contains('active')) {
+            sibling.classList.add(HOVER);
+            sibling.setAttribute('data-player', player);
+          }
         }
       }
 
@@ -280,11 +335,13 @@
     //# draw horizontal walls
     for (var i = 0; i < game.gameState.walls.h.length; i++) {
       document.getElementById(c_wall('h', game.gameState.walls.h[i].x, game.gameState.walls.h[i].y)).classList.add('active');
+      document.getElementById(c_wall('h', game.gameState.walls.h[i].w, game.gameState.walls.h[i].y)).classList.add('active');
     }
 
     //# draw vertical walls
     for (var i = 0; i < game.gameState.walls.v.length; i++) {
       document.getElementById(c_wall('v', game.gameState.walls.v[i].x, game.gameState.walls.v[i].y)).classList.add('active');
+      document.getElementById(c_wall('v', game.gameState.walls.v[i].x, game.gameState.walls.v[i].w)).classList.add('active');
     }
 
     //# draw pawns
@@ -381,7 +438,8 @@
               g.gameState.availableWalls[I.player]--;
               g.gameState.walls[I.orientation].push({
                 x: I.x,
-                y: I.y
+                y: I.y,
+                w: I.w
               });
               break;
           }
@@ -389,7 +447,9 @@
           setInfoWalls(g.gameState.availableWalls.p1, g.gameState.availableWalls.p2);
           setInfoActive(I.player);
           setInfoTimer();
-          createBoard(g);
+          setTimeout(() => {
+            createBoard(g);
+          }, 1000);
           setTimeout(play, TIMEOUT * 1000);
         }
         else {
@@ -448,6 +508,11 @@
       createBoard(game);
       setInfoTimer();
       setMessage(game.message);
+    });
+
+    socket.on('invalid', function (I) {
+      isMyTurn = I.player === PlayerID;
+      setMessage(I.error);
     });
   
     socket.on('end', function (message) {
