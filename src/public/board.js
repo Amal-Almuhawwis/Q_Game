@@ -226,7 +226,30 @@
         // top square contains the other player pawns
         if (sibling.classList.contains(HAS_PAWN)) {
           _y = y - 2;
-          sibling = document.getElementById(c_square(_x, _y));
+          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+
+            // the square on top of opponent pawn is blocked by a wall
+            if ((wall = document.getElementById(c_wall(HORIZONTAL, _x, _y))) && wall.classList.contains('active')) {
+
+              // find the square at the left
+              if ((sibling = document.getElementById(c_square(_x - 1, _y + 1)))) {
+                if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y + 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+
+              // find the square at the right
+              if ((sibling = document.getElementById(c_square(_x + 1, _y + 1)))) {
+                if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y + 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+            }
+          }
         }
 
         if (sibling) {
@@ -243,7 +266,28 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _y = y + 2;
-          sibling = document.getElementById(c_square(_x, _y));
+          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+            // square below opponent pawn has a horizontal wall below
+            if ((wall = document.getElementById(c_wall(HORIZONTAL, _x, _y - 1))) && wall.classList.contains('active')) {
+              // find square at the left
+              if ((sibling = document.getElementById(c_square(_x - 1, _y - 1)))) {
+                if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y - 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+              
+              // square at the right
+              if ((sibling = document.getElementById(c_square(_x + 1, _y - 1)))) {
+                if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y - 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }              
+            }
+          }
         }
         if (sibling) {
           if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x, _y - 1))) || !wall.classList.contains('active')) {
@@ -259,7 +303,28 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _x = x + 2;
-          sibling = document.getElementById(c_square(_x, _y));
+          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+            if ((wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) && wall.classList.contains('active')) {
+
+              // find square at the top
+              if ((sibling = document.getElementById(c_square(_x - 1, _y - 1)))) {
+                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x - 1, _y - 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+
+              // find square at the bottom
+              if ((sibling = document.getElementById(c_square(_x - 1, _y + 1)))) {
+                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x - 1, _y))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+            }
+          }
         }
         if (sibling) {
           if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) || !wall.classList.contains('active')) {
@@ -275,7 +340,28 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _x = x - 2;
-          sibling = document.getElementById(c_square(_x, _y));
+          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+            if ((wall = document.getElementById(c_wall(VERTICAL, _x, _y))) && wall.classList.contains('active')) {
+
+              // find square at the top
+              if ((sibling = document.getElementById(c_square(_x + 1, _y - 1)))) {
+                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x + 1, _y - 1))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+
+              // find square at the bottom
+              if ((sibling = document.getElementById(c_square(_x + 1, _y + 1)))) {
+                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x + 1, _y))) || !wall.classList.contains('active')) {
+                  sibling.classList.add(HOVER);
+                  sibling.setAttribute('data-player', player);
+                }
+                sibling = null;
+              }
+            }
+          }
         }
 
         if (sibling) {
@@ -285,6 +371,7 @@
           }
         }
       }
+
 
     }, false);
     
