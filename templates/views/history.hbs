@@ -4,6 +4,7 @@
   <thead>
     <tr>
     <th>Game Name</th>
+    <th>Opponent</th>
     <th>Win/Loss</th>
     <th>-</th>
     </tr>
@@ -12,6 +13,7 @@
     {{#each list}}
     <tr>
       <td>{{this.gameName}}</td>
+      <td>{{this.opponent}}</td>
       <td>{{this.status}}</td>
       <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a></td>
     </tr>
