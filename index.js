@@ -119,14 +119,13 @@ app.get('/signin', (req, res) => {
   // user should not be allowed to signin if the user is already signed in
   if (req.session.uid) {
     res.redirect('/');
+    return;
   }
-  else {
-    res.render('signin', {
-      page: "signin",
-      title: 'SignIn',
-      username: ''
-    });
-  }
+  res.render('signin', {
+    page: "signin",
+    title: 'SignIn',
+    username: ''
+  });
 });
 
 app.post('/signin', async (req, res) => {
@@ -162,6 +161,10 @@ app.post('/signin', async (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
+  if (req.session.uid) {
+    res.redirect('/');
+    return;
+  }
   res.render('signup', {
     page: "signup",
     title: 'Sign Up',
