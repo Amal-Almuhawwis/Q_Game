@@ -22,6 +22,7 @@
       <input type="password" id="repassword" name="repassword" placeholder="Password" />
     </label>
     <label class="form-action">
+      <input type="hidden" name="csrf" value="{{csrf}}" />
       <button type="submit" class="button" id="signup_btn">SignUp</button>
       <a href="/signin">already have an account?</a>
     </label>

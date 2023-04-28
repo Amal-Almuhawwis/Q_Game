@@ -2,6 +2,7 @@
 <div>
   <h2>Join a Game</h2>
   <form id="available_games_form" action="/game/join" method="post">
+  <input type="hidden" name="csrf" value="{{csrf}}" />
   {{#each games}}
     <div class="game-box">
     <h3>{{this.gameName}}</h3>
@@ -29,7 +30,10 @@
         <option value="20">20s</option>
       </select>
     </label>
-    <input type="submit" class="button" value="Create Game" />
+    <label>
+      <input type="hidden" name="csrf" value="{{csrf}}" />
+      <button type="submit" class="button">Create Game</button>
+    </label>
   </form>
 </div>
 <div class="button_container">

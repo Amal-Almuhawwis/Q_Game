@@ -7,6 +7,8 @@ const path = require('path');
 const hbs = require('hbs');
 const User = require('./lib/user');
 const Game = require('./lib/game');
+const Utils = require('./lib/utils');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
@@ -20,11 +22,20 @@ const viewsPath = path.join(__dirname, 'templates', 'views');
 const partialViewsPath = path.join(__dirname, 'templates', 'partials');
 
 
+// available Session options
+// https://www.npmjs.com/package/express-session
 const sessionMiddleware = session({
-  secret: 'abcdEFaBCD68390872674',
+  secret: '$f-k;5.Z~_80P3og+&DrTj69',
   name: 'SID',
+  //TODO:: domain value must be set to the used domain
+  //       while developing secure can be set to false to allow debuging the code,
+  //       since secure will prevent sending cookie if no https is used
+  //       maxAge: 1800000 -> 30 minute
+  cookie: { domain: null, path: '/', httpOnly: true, secure: true, sameSite: true, maxAge: 1800000 },
   resave: false,
-  saveUninitialized: true
+  rolling: true,
+  saveUninitialized: true,
+  unset: 'destroy'
 });
 
 const wrapSessionMiddleware = middleware => (socket, next) => middleware(socket.request, {}, next);
@@ -102,7 +113,8 @@ app.get('/', async (req, res) => {
       authorized: true,
       page: "main",
       title: 'Game',
-      games
+      games,
+      csrf: (req.session._csrf = Utils.randomString(32))
     });
   }
   else {
@@ -112,6 +124,10 @@ app.get('/', async (req, res) => {
 
 app.get('/signout', (req, res) => {
   req.session.uid = null;
+  req.session.destroy((err) => {
+    // any required action after destroying the session
+
+  });
   res.redirect('/signin');
 });
 
@@ -121,10 +137,12 @@ app.get('/signin', (req, res) => {
     res.redirect('/');
     return;
   }
+
   res.render('signin', {
     page: "signin",
     title: 'SignIn',
-    username: ''
+    username: '',
+    csrf: (req.session._csrf = Utils.randomString(32))
   });
 });
 
@@ -136,7 +154,10 @@ app.post('/signin', async (req, res) => {
   let error = 'Invalid Username/Password'
   let isValidUsername = /^[A-Z][A-Z0-9]{4,19}$/i.test(username);
   let isValidPassword = password.length >= 8;
+  const isValidCSRF = req.session._csrf === req.body.csrf;
+  req.session.csrf = null;
 
+  
   if (0 === username.length) {
     error = 'Username field is required';
   }
@@ -144,9 +165,20 @@ app.post('/signin', async (req, res) => {
     error = 'Password field is required';
   }
   
-  if (isValidUsername && isValidPassword) {
+  if (isValidCSRF && isValidUsername && isValidPassword) {
     // User.signin will return uid or null;
-    if ((req.session.uid = await User.signin(username, password))) {
+    const uid = await User.signin(username, password);
+    if (uid) {
+      // regenerate the session to prevent session fixation
+      req.session.regenerate((err) => {
+        if (err) {
+          return;
+        }
+        // save uid inside the callback
+        // to make sure the uid variable
+        // is saved in the new generated session id
+        req.session.uid = uid;
+      });
       res.redirect('/');
       return;
     }
@@ -156,7 +188,8 @@ app.post('/signin', async (req, res) => {
     page: "signin",
     title: 'SignIn',
     username: req.body.username,
-    error: error
+    error: error,
+    csrf: (req.session._csrf = Utils.randomString(32))
   });
 });
 
@@ -169,7 +202,8 @@ app.get('/signup', (req, res) => {
     page: "signup",
     title: 'Sign Up',
     username: '',
-    errors: undefined
+    errors: [],
+    csrf: (req.session._csrf = Utils.randomString(32))
   });
 });
 
@@ -182,8 +216,11 @@ app.post('/signup', async (req, res) => {
   let isValidUsername = /^[A-Z][A-Z0-9]{4,19}$/i.test(username);
   let isValidPassword = password.length >= 8;
   let isValidRePassword = password === re_password;
+  const isValidCSRF = req.session._csrf === req.body.csrf;
+  req.session.csrf = null;
 
-  if (isValidUsername && isValidPassword && isValidRePassword) {
+
+  if (isValidCSRF && isValidUsername && isValidPassword && isValidRePassword) {
     if (!(await User.exists(username))) {
       const id = await User.create(username, password);
       if (id) {
@@ -217,13 +254,17 @@ app.post('/signup', async (req, res) => {
     page: "signup",
     title: 'Sign Up',
     username: req.body.username,
-    errors: errors
+    errors: errors,
+    csrf: (req.session._csrf = Utils.randomString(32))
   });
   
 });
 
 app.post('/game/join', async (req, res) => {
-  if (req.session.uid && !req.session.gid) {
+  const isValidCSRF = req.session._csrf === req.body.csrf;
+  req.session.csrf = null;
+
+  if (isValidCSRF && req.session.uid && !req.session.gid) {
     const game_id = req.body.game_id.trim().toLowerCase();
     if (await Game.join(game_id, req.session.uid)) {
       // 
@@ -237,8 +278,11 @@ app.post('/game/join', async (req, res) => {
 });
 
 app.post('/game/create', async (req, res) => {
+  const isValidCSRF = req.session._csrf === req.body.csrf;
+  req.session.csrf = null;
+
   // create game only for signed in user who do not have an active game
-  if (req.session.uid && !req.session.gid) {
+  if (isValidCSRF && req.session.uid && !req.session.gid) {
     const game_name = req.body.game.trim().toLowerCase();
     const timeout = req.body.timeout.trim();
     // check if game name is valid string
