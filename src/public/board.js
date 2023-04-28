@@ -12,6 +12,7 @@
     WALL = 'wall',
     VERTICAL = 'v',
     HORIZONTAL = 'h',
+    isTouchEnabled = ('ontouchstart' in window),
     socket = io();
 
   // generate square id from x,y position
@@ -160,24 +161,37 @@
 
     // draw the wall if applicable
     rect.addEventListener('click', function() {
-      //TODO:: check if user can draw a wall first
       var Rs, wall;
-      if (isMyTurn && RemainingWalls > 0 && !rect.classList.contains('active') && (Rs = findWallSibling(dir, x, y, rect))) {
-        wall = {
-          orientation: dir,
-          // first item x
-          x: +Rs[0].getAttribute('data-x'),
-          // first item y
-          y: +Rs[0].getAttribute('data-y'),
-          // second item x|y [h|v]
-          w: +Rs[1].getAttribute('data-' + (VERTICAL === dir ? 'y': 'x'))
-        };
-
-        // make the wall from the server
-        socket.emit('wall', {player: PlayerID, wall: wall});
-        isMyTurn = false;
+      if (isMyTurn && RemainingWalls > 0) {
+        if (isTouchEnabled && !rect.classList.contains(HOVER)) {
+          removeHover();
+          if ((Rs = findWallSibling(dir, x, y, rect))) {
+            Rs[0].classList.add(HOVER);
+            Rs[1].classList.add(HOVER);    
+          }
+        }
+        else if (!rect.classList.contains('active') && (Rs = findWallSibling(dir, x, y, rect))) {
+          wall = {
+            orientation: dir,
+            // first item x
+            x: +Rs[0].getAttribute('data-x'),
+            // first item y
+            y: +Rs[0].getAttribute('data-y'),
+            // second item x|y [h|v]
+            w: +Rs[1].getAttribute('data-' + (VERTICAL === dir ? 'y': 'x'))
+          };
+  
+          // make the wall from the server
+          socket.emit('wall', {player: PlayerID, wall: wall});
+          isMyTurn = false;
+  
+          removeHover();
+        }
+        else {
+          // make sure to remove any hover if not valid click
+          removeHover();
+        }
       }
-      removeHover();
     }, false);
 
     return rect;

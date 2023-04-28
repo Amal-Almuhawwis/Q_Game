@@ -413,7 +413,12 @@ io.on('connection', async (socket) => {
 
   socket.on('wall', async ({player, wall}) => {
     const g = await Game.makeWall(sess.gid, player, wall);
-    io.to(sess.gid).emit('update', g.error ? g : g.public);
+    if (g.error) {
+      socket.emit('invalid', {error: g.error, player});
+    }
+    else {
+      io.to(sess.gid).emit('update', g.public);
+    }
   });
 
   socket.on('timeout', async (otherPlayerId) => {
