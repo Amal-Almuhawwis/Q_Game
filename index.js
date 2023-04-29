@@ -8,7 +8,6 @@ const hbs = require('hbs');
 const User = require('./lib/user');
 const Game = require('./lib/game');
 const Utils = require('./lib/utils');
-
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
@@ -27,11 +26,13 @@ const partialViewsPath = path.join(__dirname, 'templates', 'partials');
 const sessionMiddleware = session({
   secret: '$f-k;5.Z~_80P3og+&DrTj69',
   name: 'SID',
+  // required field to allow secure cookie behined proxy [nginx|apache as webserver]
+  proxy: true,
   //TODO:: domain value must be set to the used domain
   //       while developing secure can be set to false to allow debuging the code,
   //       since secure will prevent sending cookie if no https is used
   //       maxAge: 1800000 -> 30 minute
-  cookie: { domain: null, path: '/', httpOnly: true, secure: true, sameSite: true, maxAge: 1800000 },
+  cookie: { path: '/', httpOnly: true, secure: true, sameSite: true, maxAge: null },
   resave: false,
   rolling: true,
   saveUninitialized: true,
@@ -155,8 +156,7 @@ app.post('/signin', async (req, res) => {
   let isValidUsername = /^[A-Z][A-Z0-9]{4,19}$/i.test(username);
   let isValidPassword = password.length >= 8;
   const isValidCSRF = req.session._csrf === req.body.csrf;
-  req.session.csrf = null;
-
+  delete req.session._csrf;
   
   if (0 === username.length) {
     error = 'Username field is required';
@@ -178,8 +178,10 @@ app.post('/signin', async (req, res) => {
         // to make sure the uid variable
         // is saved in the new generated session id
         req.session.uid = uid;
+        // make sure to redirect inside regenerate callback
+        // to load the new page with the new session id
+        res.redirect('/');
       });
-      res.redirect('/');
       return;
     }
   }
@@ -217,7 +219,7 @@ app.post('/signup', async (req, res) => {
   let isValidPassword = password.length >= 8;
   let isValidRePassword = password === re_password;
   const isValidCSRF = req.session._csrf === req.body.csrf;
-  req.session.csrf = null;
+  delete req.session._csrf;
 
 
   if (isValidCSRF && isValidUsername && isValidPassword && isValidRePassword) {
@@ -262,7 +264,7 @@ app.post('/signup', async (req, res) => {
 
 app.post('/game/join', async (req, res) => {
   const isValidCSRF = req.session._csrf === req.body.csrf;
-  req.session.csrf = null;
+  delete req.session._csrf;
 
   if (isValidCSRF && req.session.uid && !req.session.gid) {
     const game_id = req.body.game_id.trim().toLowerCase();
@@ -279,7 +281,7 @@ app.post('/game/join', async (req, res) => {
 
 app.post('/game/create', async (req, res) => {
   const isValidCSRF = req.session._csrf === req.body.csrf;
-  req.session.csrf = null;
+  delete req.session._csrf;
 
   // create game only for signed in user who do not have an active game
   if (isValidCSRF && req.session.uid && !req.session.gid) {
