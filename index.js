@@ -13,7 +13,8 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 // Constants
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.NODE_PORT || 3000;
+const inProduction = 'production' === process.env.NODE_ENV;
 
 // Paths
 const staticPath = path.join(__dirname, 'public');
@@ -27,12 +28,13 @@ const sessionMiddleware = session({
   secret: '$f-k;5.Z~_80P3og+&DrTj69',
   name: 'SID',
   // required field to allow secure cookie behined proxy [nginx|apache as webserver]
-  proxy: true,
+  //proxy: true,
+  proxy: inProduction,
   //TODO:: domain value must be set to the used domain
   //       while developing secure can be set to false to allow debuging the code,
   //       since secure will prevent sending cookie if no https is used
   //       maxAge: 1800000 -> 30 minute
-  cookie: { path: '/', httpOnly: true, secure: true, sameSite: true, maxAge: null },
+  cookie: { path: '/', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
   resave: false,
   rolling: true,
   saveUninitialized: true,
