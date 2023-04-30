@@ -23,6 +23,7 @@ const partialViewsPath = path.join(__dirname, 'templates', 'partials');
 
 
 // available Session options
+// http://expressjs.com/en/resources/middleware/session.html
 // https://www.npmjs.com/package/express-session
 const sessionMiddleware = session({
   secret: '$f-k;5.Z~_80P3og+&DrTj69',
@@ -33,6 +34,7 @@ const sessionMiddleware = session({
   //TODO:: domain value must be set to the used domain
   //       while developing secure can be set to false to allow debuging the code,
   //       since secure will prevent sending cookie if no https is used
+  //       maxAge is in milliseconds
   //       maxAge: 1800000 -> 30 minute
   cookie: { path: '/', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
   resave: false,
@@ -127,11 +129,20 @@ app.get('/', async (req, res) => {
 
 app.get('/signout', (req, res) => {
   req.session.uid = null;
+  // destroy current session
   req.session.destroy((err) => {
-    // any required action after destroying the session
+    // regenerate new session id
+    req.session.regenerate((err) => {
+      if (err) next(err);
 
+      // save the new session id
+      req.session.save((err) => {
+        if (err) next(err);
+
+        res.redirect('/signin');
+      });
+    });
   });
-  res.redirect('/signin');
 });
 
 app.get('/signin', (req, res) => {
@@ -174,15 +185,18 @@ app.post('/signin', async (req, res) => {
       // regenerate the session to prevent session fixation
       req.session.regenerate((err) => {
         if (err) {
-          return;
+          next(err);
         }
         // save uid inside the callback
         // to make sure the uid variable
         // is saved in the new generated session id
         req.session.uid = uid;
-        // make sure to redirect inside regenerate callback
+        // make sure to redirect inside regenerate callback after calling save
         // to load the new page with the new session id
-        res.redirect('/');
+        req.session.save((err) => {
+          if (err) next(err)
+          res.redirect('/')
+        });
       });
       return;
     }
@@ -408,13 +422,11 @@ io.on('connection', async (socket) => {
   // playback will not require an active game in session variable
   socket.on('playback-join', async (gid) => {
     if (!/^[0-9A-F]{24}$/i.test(gid)) {
-      console.log('invalid gid')
       return;
     }
 
     const g = await Game.find(gid);
     if (!g || -1 === [g.private.players.playerOne, g.private.players.playerTwo].indexOf(sess.uid)) {
-      console.log('not a game')
       return;
     }
 

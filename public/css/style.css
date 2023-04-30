@@ -356,7 +356,7 @@ svg rect.wall.hov, svg rect.square.hov{
 
 
 
-
+/* Table styles */
 table{
   width:80%;
   margin: 0 auto;
@@ -377,7 +377,6 @@ table tbody tr{
   transition:background-color 0.3s linear;
 }
 table tbody > tr:hover{background:rgba(0,0,0,.075);}
-
 
 
 
@@ -459,6 +458,13 @@ table tbody > tr:hover{background:rgba(0,0,0,.075);}
 
 
 
+
+
+
+
+
+
+/* to display the button in full width of the container */
 .button_container a.button{
   display:flex;
   width:100%;

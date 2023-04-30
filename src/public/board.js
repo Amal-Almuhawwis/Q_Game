@@ -197,6 +197,24 @@
     return rect;
   }
 
+
+  // helper method to hover on allowed pawn move
+  function applyHover(dir, player, x, y, sibling) {
+    var wall,
+      orientation = ['right', 'left'].indexOf(dir) > -1 ? VERTICAL : HORIZONTAL,
+      _x = 'right' === dir ? x - 1 : x,
+      _y = 'bottom' === dir ? y - 1 : y;
+    if (sibling || (sibling = document.getElementById(c_square(x, y)))) {
+      if (!(wall = document.getElementById(c_wall(orientation, _x, _y))) || !wall.classList.contains('active')) {
+        sibling.classList.add(HOVER);
+        sibling.setAttribute('data-player', player);
+      }
+      sibling = null;
+    }
+    return sibling;
+  }
+
+
   // draw a pawn in x,y position
   function createPawn(pos_x, pos_y, player) {
     var pawn = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -226,37 +244,24 @@
         // top square contains the other player pawns
         if (sibling.classList.contains(HAS_PAWN)) {
           _y = y - 2;
-          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+          if (_y < 0) {
+            sibling = applyHover('left', player, _x - 1, _y + 1);
+            sibling = applyHover('right', player, _x + 1, _y + 1);
+        }
+          else if ((sibling = document.getElementById(c_square(_x, _y)))) {
 
             // the square on top of opponent pawn is blocked by a wall
             if ((wall = document.getElementById(c_wall(HORIZONTAL, _x, _y))) && wall.classList.contains('active')) {
-
               // find the square at the left
-              if ((sibling = document.getElementById(c_square(_x - 1, _y + 1)))) {
-                if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y + 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
-
+              sibling = applyHover('left', player, _x - 1, _y + 1);
               // find the square at the right
-              if ((sibling = document.getElementById(c_square(_x + 1, _y + 1)))) {
-                if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y + 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
+              sibling = applyHover('right', player, _x + 1, _y + 1);
             }
           }
         }
 
         if (sibling) {
-          if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x, _y))) || !wall.classList.contains('active')) {
-            sibling.classList.add(HOVER);
-            sibling.setAttribute('data-player', player);
-          }
+          applyHover('top', player, _x, _y, sibling);
         }
       }
 
@@ -266,34 +271,22 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _y = y + 2;
-          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+          if (_y > 8) {
+            sibling = applyHover('left', player, _x - 1, _y -1);
+            sibling = applyHover('right', player, _x + 1, _y -1);
+        }
+          else if ((sibling = document.getElementById(c_square(_x, _y)))) {
             // square below opponent pawn has a horizontal wall below
             if ((wall = document.getElementById(c_wall(HORIZONTAL, _x, _y - 1))) && wall.classList.contains('active')) {
               // find square at the left
-              if ((sibling = document.getElementById(c_square(_x - 1, _y - 1)))) {
-                if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y - 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
-              
+              sibling = applyHover('left', player, _x - 1, _y -1);
               // square at the right
-              if ((sibling = document.getElementById(c_square(_x + 1, _y - 1)))) {
-                if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y - 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }              
+              sibling = applyHover('right', player, _x + 1, _y -1);
             }
           }
         }
         if (sibling) {
-          if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x, _y - 1))) || !wall.classList.contains('active')) {
-            sibling.classList.add(HOVER);
-            sibling.setAttribute('data-player', player);
-          }
+          applyHover('bottom', player, _x, _y, sibling);
         }
       }
 
@@ -303,34 +296,25 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _x = x + 2;
-          if ((sibling = document.getElementById(c_square(_x, _y)))) {
-            if ((wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) && wall.classList.contains('active')) {
-
+          if (_x > 8) {
               // find square at the top
-              if ((sibling = document.getElementById(c_square(_x - 1, _y - 1)))) {
-                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x - 1, _y - 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
+              sibling = applyHover('top', player, _x - 1, _y - 1);
+              // find square at the bottom
+              sibling = applyHover('bottom', player, _x - 1, _y + 1);
+          }
+          else if ((sibling = document.getElementById(c_square(_x, _y)))) {
+            if ((wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) && wall.classList.contains('active')) {
+              // find square at the top
+              sibling = applyHover('top', player, _x - 1, _y - 1);
 
               // find square at the bottom
-              if ((sibling = document.getElementById(c_square(_x - 1, _y + 1)))) {
-                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x - 1, _y))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
+              sibling = applyHover('bottom', player, _x - 1, _y + 1);
             }
           }
         }
+
         if (sibling) {
-          if (!(wall = document.getElementById(c_wall(VERTICAL, _x - 1, _y))) || !wall.classList.contains('active')) {
-            sibling.classList.add(HOVER);
-            sibling.setAttribute('data-player', player);
-          }
+          applyHover('right', player, _x, _y, sibling);
         }
       }
 
@@ -340,38 +324,25 @@
       if ((sibling = document.getElementById(c_square(_x, _y)))) {
         if (sibling.classList.contains(HAS_PAWN)) {
           _x = x - 2;
-          if ((sibling = document.getElementById(c_square(_x, _y)))) {
+          if (_x < 0) {
+            sibling = applyHover('top', player, _x + 1, _y -1);
+            sibling = applyHover('bottom', player, _x + 1, _y + 1);
+          }
+          else if ((sibling = document.getElementById(c_square(_x, _y)))) {
             if ((wall = document.getElementById(c_wall(VERTICAL, _x, _y))) && wall.classList.contains('active')) {
-
               // find square at the top
-              if ((sibling = document.getElementById(c_square(_x + 1, _y - 1)))) {
-                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x + 1, _y - 1))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
+              sibling = applyHover('top', player, _x + 1, _y -1);
 
               // find square at the bottom
-              if ((sibling = document.getElementById(c_square(_x + 1, _y + 1)))) {
-                if (!(wall = document.getElementById(c_wall(HORIZONTAL, _x + 1, _y))) || !wall.classList.contains('active')) {
-                  sibling.classList.add(HOVER);
-                  sibling.setAttribute('data-player', player);
-                }
-                sibling = null;
-              }
+              sibling = applyHover('bottom', player, _x + 1, _y + 1);
             }
           }
         }
 
         if (sibling) {
-          if (!(wall = document.getElementById(c_wall(VERTICAL, _x, _y))) || !wall.classList.contains('active')) {
-            sibling.classList.add(HOVER);
-            sibling.setAttribute('data-player', player);
-          }
+          applyHover('left', player, _x, _y, sibling);
         }
       }
-
 
     }, false);
     
@@ -481,6 +452,7 @@
     elem = document.getElementById('timer');
 
     if (removeTimer) {
+      clearInterval(TimerIV);
       elem.innerHTML = '';
     }
     else {
