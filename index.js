@@ -128,21 +128,21 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/signout', (req, res) => {
-  req.session.uid = null;
-  // destroy current session
-  req.session.destroy((err) => {
-    // regenerate new session id
+  if (req.session.uid) {
     req.session.regenerate((err) => {
-      if (err) next(err);
-
-      // save the new session id
+      if (err) {
+        next(err);
+      }
+      req.session.uid = null;
       req.session.save((err) => {
         if (err) next(err);
 
-        res.redirect('/signin');
+        res.redirect('/');
       });
     });
-  });
+    return;
+  }
+  res.redirect('/');
 });
 
 app.get('/signin', (req, res) => {
