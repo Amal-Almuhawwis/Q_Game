@@ -71,6 +71,16 @@ hbs.registerPartials(partialViewsPath);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// display "500 Internal Server Error" 
+// for unhandled errors in production 
+// to eliminate displaying sensitive information
+app.use((err, req, res, next) => {
+  if (err && inProduction) {
+    return res.sendStatus(500);
+  }
+  next();
+});
+
 
 app.get('/', async (req, res) => {
   // check if user is signed in
