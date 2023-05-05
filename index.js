@@ -36,7 +36,7 @@ const sessionMiddleware = session({
   //       since secure will prevent sending cookie if no https is used
   //       maxAge is in milliseconds
   //       maxAge: 1800000 -> 30 minute
-  cookie: { path: '/', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
+  cookie: { path: '/', domain: 'quridor.xyz', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
   resave: false,
   rolling: true,
   saveUninitialized: true,
@@ -80,6 +80,10 @@ app.use((err, req, res, next) => {
   }
   next();
 });
+
+
+// disable "X-Powered-By: express;" header
+app.disable('x-powered-by');
 
 
 app.get('/', async (req, res) => {
