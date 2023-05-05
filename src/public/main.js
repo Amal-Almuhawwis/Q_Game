@@ -57,7 +57,7 @@
 
 
     $availableGamesForm.appendChild(div);
-    $noGames.style.display = 'none';
+    $noGames.classList.add('hide');
   });
 
   socket.on('av_game_rm', function(id) {
@@ -66,6 +66,11 @@
       $availableGamesForm.removeChild(btn.parentNode);
     }
 
-    $noGames.style.display = document.getElementsByClassName('game-box').length === 0 ? 'block' : 'none';
+    if (0 === document.getElementsByClassName('game-box').length) {
+      $noGames.classList.remove('hide');
+    }
+    else {
+      $noGames.classList.add('hide');
+    }
   });
 })();
