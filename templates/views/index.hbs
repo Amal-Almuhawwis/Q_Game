@@ -6,7 +6,6 @@
   {{#each games}}
     <div class="game-box">
     <h3>{{this.gameName}}</h3>
-    <p>timeout: <b>{{this.timeout}}s</b></p>
     <button type="submit" class="button" id="g_{{this.gameId}}" name="game_id" value="{{this.gameId}}">Join</button>
   </div>
   {{/each}}
@@ -19,16 +18,6 @@
     <label>
       <span>Game name</span>
       <input type="text" id="inp_create_game" name="game" placeholder="Game" />
-    </label>
-    <label>
-      <span>Timeout Duration</span>
-      <select name="timeout">
-        <option value="60">60s</option>
-        <option value="50">50s</option>
-        <option value="40">40s</option>
-        <option value="30">30s</option>
-        <option value="20">20s</option>
-      </select>
     </label>
     <label>
       <input type="hidden" name="csrf" value="{{csrf}}" />

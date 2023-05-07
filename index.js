@@ -25,7 +25,7 @@ const partialViewsPath = path.join(__dirname, 'templates', 'partials');
 // available Session options
 // http://expressjs.com/en/resources/middleware/session.html
 // https://www.npmjs.com/package/express-session
-const sessionMiddleware = session({
+let sessionConfig = {
   secret: '$f-k;5.Z~_80P3og+&DrTj69',
   name: 'SID',
   // required field to allow secure cookie behined proxy [nginx|apache as webserver]
@@ -36,12 +36,18 @@ const sessionMiddleware = session({
   //       since secure will prevent sending cookie if no https is used
   //       maxAge is in milliseconds
   //       maxAge: 1800000 -> 30 minute
-  cookie: { path: '/', domain: 'quridor.xyz', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
+  cookie: { path: '/', httpOnly: true, secure: inProduction, sameSite: true, maxAge: null },
   resave: false,
   rolling: true,
   saveUninitialized: true,
   unset: 'destroy'
-});
+};
+if (inProduction) {
+  sessionConfig.cookie.domain = 'quridor.xyz';
+  sessionConfig.cookie.secure = true;
+  sessionConfig.proxy = true;
+}
+const sessionMiddleware = session(sessionConfig);
 
 const wrapSessionMiddleware = middleware => (socket, next) => middleware(socket.request, {}, next);
 
@@ -325,19 +331,13 @@ app.post('/game/create', async (req, res) => {
   // create game only for signed in user who do not have an active game
   if (isValidCSRF && req.session.uid && !req.session.gid) {
     const game_name = req.body.game.trim().toLowerCase();
-    const timeout = req.body.timeout.trim();
     // check if game name is valid string
-    if (/^[A-Z0-9_ \-]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
-      const game = await Game.create(game_name, req.session.uid, +timeout);
-      if (game) {
-        if (game.error) {
-          console.log(game.error);
-        }
-        else {
-          io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName, timeout: game.public.timeout});
-          req.session.player = 'p1';
-          req.session.gid = game.public.gameId;
-        }
+    if (/^[A-Z0-9_ \-]{2,20}$/i.test(game_name)) {
+      const game = await Game.create(game_name, req.session.uid);
+      if (game && !game.error) {
+        io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName});
+        req.session.player = 'p1';
+        req.session.gid = game.public.gameId;
       }
     }
   }

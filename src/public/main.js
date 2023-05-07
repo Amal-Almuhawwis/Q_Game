@@ -36,16 +36,12 @@
     var 
       div = document.createElement('div'),
       h3 = document.createElement('h3'),
-      p = document.createElement('p'),
       btn = document.createElement('button');
     
     div.classList.add('game-box');
 
     h3.innerHTML = g.gameName;
     div.appendChild(h3);
-
-    p.innerHTML = 'timeout: <b>'+g.timeout+'s<b>';
-    div.appendChild(p);
 
     btn.innerHTML = 'Join';
     btn.setAttribute('type', 'submit');
