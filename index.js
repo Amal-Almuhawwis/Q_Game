@@ -76,6 +76,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // to eliminate displaying sensitive information
 app.use((err, req, res, next) => {
   if (err && inProduction) {
+    console.error(err);
     return res.sendStatus(500);
   }
   next();
@@ -145,11 +146,15 @@ app.get('/signout', (req, res) => {
   if (req.session.uid) {
     req.session.regenerate((err) => {
       if (err) {
+        console.log(err);
         next(err);
       }
       req.session.uid = null;
       req.session.save((err) => {
-        if (err) next(err);
+        if (err) {
+          console.log(err);
+          next(err);
+        }
 
         res.redirect('/');
       });
@@ -199,6 +204,7 @@ app.post('/signin', async (req, res) => {
       // regenerate the session to prevent session fixation
       req.session.regenerate((err) => {
         if (err) {
+          console.log(err);
           next(err);
         }
         // save uid inside the callback
@@ -208,7 +214,10 @@ app.post('/signin', async (req, res) => {
         // make sure to redirect inside regenerate callback after calling save
         // to load the new page with the new session id
         req.session.save((err) => {
-          if (err) next(err)
+          if (err) {
+            console.log(err);
+            next(err);
+          }
           res.redirect('/')
         });
       });
@@ -320,10 +329,15 @@ app.post('/game/create', async (req, res) => {
     // check if game name is valid string
     if (/^[A-Z0-9_ \-]{2,20}$/i.test(game_name) && /^[2-6]0$/.test(timeout)) {
       const game = await Game.create(game_name, req.session.uid, +timeout);
-      if (game && !game.error) {
-        io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName, timeout: game.public.timeout});
-        req.session.player = 'p1';
-        req.session.gid = game.public.gameId;
+      if (game) {
+        if (game.error) {
+          console.log(game.error);
+        }
+        else {
+          io.sockets.emit('av_game_add', {gameId: game.public.gameId, gameName: game.public.gameName, timeout: game.public.timeout});
+          req.session.player = 'p1';
+          req.session.gid = game.public.gameId;
+        }
       }
     }
   }
@@ -374,6 +388,7 @@ app.get('/game/history', async (req, res) => {
 
   const gamesPlayed = await User.getGamesPlayed(req.session.uid);
   if (gamesPlayed.error) {
+    console.log(gamesPlayed.error);
     req.session.uid = null;
     res.redirect('/signin');
     return;
