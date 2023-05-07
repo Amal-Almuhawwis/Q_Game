@@ -16,6 +16,9 @@ const io = socketio(server);
 const PORT = process.env.NODE_PORT || 3000;
 const inProduction = 'production' === process.env.NODE_ENV;
 
+// define timeout
+const TIMEOUT = 180;
+
 // Paths
 const staticPath = path.join(__dirname, 'public');
 const viewsPath = path.join(__dirname, 'templates', 'views');
@@ -148,8 +151,18 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.get('/signout', (req, res) => {
+app.get('/signout', async (req, res) => {
   if (req.session.uid) {
+
+    // user has an active game
+    if (req.session.gid && req.session.player) {
+      const winnerID = 'p1' === req.session.player ? 'p2' : 'p1';
+      const g = await Game.leave(req.session.gid, winnerID);
+      if (g && !g.error) {
+        io.to(req.session.gid).emit('end', g.public.message);
+      }
+    }
+
     req.session.regenerate((err) => {
       if (err) {
         console.log(err);
@@ -476,7 +489,7 @@ io.on('connection', async (socket) => {
     socket.join(sess.gid);
 
     // send the id [p1|p2] to the joined user
-    socket.emit('init', {player: sess.player, timeout: g.public.timeout});
+    socket.emit('init', {player: sess.player, timeout: TIMEOUT});
 
 
     // two players is ready to play the game
@@ -513,21 +526,20 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('timeout', async (otherPlayerId) => {
-    const playerId = 'p1' === otherPlayerId ? 'p2': 'p1';
-    const g = await Game.aiAction(sess.gid, playerId);
+  socket.on('timeout', async (playerId) => {
+    const g = await Game.leave(sess.gid, playerId);
+
+    if (!g) {
+      socket.emit('error', "");
+      return;
+    }
 
     if (g.error) {
       socket.emit('error', g.error);
       return;
     }
 
-    if (0 !== g.public.gameState.winner) {
-      io.to(sess.gid).emit('end', g.public.message);
-    }
-    else {
-      io.to(sess.gid).emit('update', g.public);
-    }
+    io.to(sess.gid).emit('end', g.public.message);
   });
 
   // socket user is disconnected

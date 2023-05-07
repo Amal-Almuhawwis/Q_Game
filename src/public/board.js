@@ -515,6 +515,9 @@
                 w: I.w
               });
               break;
+            case 'message':
+              setMessage(I.message);
+              break;
           }
           isMyTurn = false;
           setInfoWalls(g.gameState.availableWalls.p1, g.gameState.availableWalls.p2);
