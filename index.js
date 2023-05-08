@@ -159,6 +159,9 @@ app.get('/signout', async (req, res) => {
       const winnerID = 'p1' === req.session.player ? 'p2' : 'p1';
       const g = await Game.leave(req.session.gid, winnerID);
       if (g && !g.error) {
+        if (g.io) {
+          io.sockets.emit('av_game_rm', g.io);
+        }    
         io.to(req.session.gid).emit('end', g.public.message);
       }
     }
@@ -358,6 +361,21 @@ app.post('/game/create', async (req, res) => {
   res.redirect('/');
 });
 
+app.get('/game/leave', async (req, res) => {
+  if (req.session.uid && req.session.gid && req.session.player) {
+    const winnerID = 'p1' === req.session.player ? 'p2' : 'p1';
+    const g = await Game.leave(req.session.gid, winnerID);
+    if (g && !g.error) {
+      if (g.io) {
+        io.sockets.emit('av_game_rm', g.io);
+      }  
+      io.to(req.session.gid).emit('end', g.public.message);
+    }
+  }
+
+  res.redirect('/');
+});
+
 app.get('/leaderboard', async (req, res) => {
   if (!req.session.uid) {
     res.redirect('/signin');
@@ -537,6 +555,10 @@ io.on('connection', async (socket) => {
     if (g.error) {
       socket.emit('error', g.error);
       return;
+    }
+
+    if (g.io) {
+      io.sockets.emit('av_game_rm', g.io);
     }
 
     io.to(sess.gid).emit('end', g.public.message);

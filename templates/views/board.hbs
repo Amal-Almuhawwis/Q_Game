@@ -7,6 +7,9 @@
   <div>
     <h3 id="timer"></h3>
     <p id="message"></p>
+    {{#unless playback}}
+    <a id="leave_btn" href="/game/leave" class="button">Leave</a>
+    {{/unless}}
   </div>
   <div class="player_box p2">
     <h3 id="p2_name">Player 2</h3>

@@ -4,6 +4,7 @@
   var 
     PlayerID, isMyTurn, RemainingWalls, TimerIV,
     $gameContainer = document.getElementById('game_container'),
+    $leaveBtn = document.getElementById('leave_btn'),
     isPlayBackMode = document.getElementsByClassName('playback-mode').length === 1 && $gameContainer && $gameContainer.getAttribute('data-gid'),
     TIMEOUT = 60,
     HAS_PAWN = 'has_pawn',
@@ -601,6 +602,14 @@
       $gameContainer.appendChild(a);
     });
   
+    if ($leaveBtn) {
+      $leaveBtn.addEventListener('click', function (e) {
+        if (!confirm('Are you sure? You will lose the game!')) {
+          e.preventDefault();
+        }
+      }, false);
+    }
+
   }
 
 
