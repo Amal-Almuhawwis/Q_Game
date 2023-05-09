@@ -355,6 +355,12 @@ svg rect.wall.hov, svg rect.square.hov{
 
 
 .hide{display:none;}
+.color-green{
+  color:green;
+}
+.color-red{
+  color:red;
+}
 
 
 /* Table styles */

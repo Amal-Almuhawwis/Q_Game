@@ -1,11 +1,11 @@
 {{>header}}
-<h1>Game History for {{player}}</h1>
+<h1>Games History</h1>
 <table>
   <thead>
     <tr>
     <th>Game Name</th>
-    <th>Opponent</th>
-    <th>Win/Loss</th>
+    <th>Player One</th>
+    <th>Player Two</th>
     <th>-</th>
     </tr>
   </thead>
@@ -13,8 +13,8 @@
     {{#each list}}
     <tr>
       <td>{{this.gameName}}</td>
-      <td>{{this.opponent}}</td>
-      <td>{{this.status}}</td>
+      <td class="{{#if playerOneIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerOne}}</td>
+      <td class="{{#if playerTwoIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerTwo}}</td>
       <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a></td>
     </tr>
     {{/each}}

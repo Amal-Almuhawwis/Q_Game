@@ -417,21 +417,13 @@ app.get('/game/history', async (req, res) => {
     return;
   }
 
-  const gamesPlayed = await User.getGamesPlayed(req.session.uid);
-  if (gamesPlayed.error) {
-    console.log(gamesPlayed.error);
-    req.session.uid = null;
-    res.redirect('/signin');
-    return;
-  }
-
+  const gamesPlayed = await Game.getAll();
 
   res.render('history', {
     authorized: true,
     page: 'history',
     title: 'Game History',
-    player: gamesPlayed.username,
-    list: gamesPlayed.list
+    list: gamesPlayed
   });
 });
 
