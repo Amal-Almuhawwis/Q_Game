@@ -440,28 +440,34 @@ app.get('/game/history', async (req, res) => {
     authorized: true,
     page: 'history',
     title: 'Game History',
+    csrf: (req.session._csrf = Utils.generateCSRFToken()),
     list: gamesPlayed
   });
 });
 
-app.get('/game/history/playback', async (req, res) => {
+app.post('/game/history/playback', async (req, res) => {
   if (!req.session.uid) {
     res.redirect('/signin');
     return;
   }
 
+  const isValidCSRF = 
+                        // validate CSRF token
+                        (req.session._csrf === req.body.csrf) && 
+                        // treat No Referer as unauthorized,
+                        // and validate referer againest origin header
+                        (req.headers.referer === (req.headers.origin + '/game/history'));
+  delete req.session._csrf;
+
+  const isValidGameID = /^[0-9A-F]{24}$/i.test(req.body.gid);
+
   let g;
-  // query parameter does not exists
-  if (!req.query.g || 
-      // invalid query param
-      !/^[0-9A-F]{24}$/i.test(req.query.g) ||
-      // game does not exists
-      !(g = await Game.find(req.query.g))) {
+  if (!isValidCSRF || !isValidGameID || !(g = await Game.find(req.body.gid))) {
     res.writeHead(404);
     res.end();
     return;
   }
-  
+ 
   res.render('board', {
     authorized: true,
     page: 'board',
@@ -472,19 +478,23 @@ app.get('/game/history/playback', async (req, res) => {
 
 });
 
-app.get('/game/history/json', async (req, res) => {
+app.post('/game/history/json', async (req, res) => {
   if (!req.session.uid) {
     res.redirect('/signin');
     return;
   }
 
+  const isValidCSRF = 
+                        // validate CSRF token
+                        (req.session._csrf === req.body.csrf) && 
+                        // treat No Referer as unauthorized,
+                        // and validate referer againest origin header
+                        (req.headers.referer === (req.headers.origin + '/game/history'));
+  delete req.session._csrf;
+
+  const isValidGameID = /^[0-9A-F]{24}$/i.test(req.body.gid);
   let g;
-  // query parameter does not exists
-  if (!req.query.g || 
-      // invalid query param
-      !/^[0-9A-F]{24}$/i.test(req.query.g) ||
-      // game does not exists
-      !(g = await Game.find(req.query.g))) {
+  if (!isValidCSRF || !isValidGameID || !(g = await Game.find(req.body.gid))) {
     res.writeHead(404);
     res.end();
     return;

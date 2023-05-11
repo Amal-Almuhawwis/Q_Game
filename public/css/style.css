@@ -384,7 +384,8 @@ table tbody tr{
   transition:background-color 0.3s linear;
 }
 table tbody > tr:hover{background:rgba(0,0,0,.075);}
-
+table td.action form{display:inline-block;margin-right:5px;}
+table td.action form:last-child{margin-right:0;}
 
 
 

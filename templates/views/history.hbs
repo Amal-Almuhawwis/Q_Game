@@ -15,7 +15,18 @@
       <td>{{this.gameName}}</td>
       <td class="{{#if playerOneIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerOne}}</td>
       <td class="{{#if playerTwoIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerTwo}}</td>
-      <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a><br /><a href="/game/history/json?g={{this.gameId}}">JSON</a></td>
+      <td class="action">
+        <form action="/game/history/playback" method="post">
+          <input type="hidden" name="csrf" value="{{../csrf}}" />
+          <input type="hidden" name="gid" value="{{this.gameId}}" />
+          <button type="submit" class="button">PlayBack</button>
+        </form>
+        <form action="/game/history/json" method="post">
+          <input type="hidden" name="csrf" value="{{../csrf}}" />
+          <input type="hidden" name="gid" value="{{this.gameId}}" />
+          <button type="submit" class="button">JSON</button>
+        </form>
+      </td>
     </tr>
     {{/each}}
   </tbody>
