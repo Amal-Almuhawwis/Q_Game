@@ -15,7 +15,7 @@
       <td>{{this.gameName}}</td>
       <td class="{{#if playerOneIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerOne}}</td>
       <td class="{{#if playerTwoIsWinner}}color-green{{else}}color-red{{/if}}">{{this.playerTwo}}</td>
-      <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a></td>
+      <td><a href="/game/history/playback?g={{this.gameId}}">PlayBack</a><br /><a href="/game/history/json?g={{this.gameId}}">JSON</a></td>
     </tr>
     {{/each}}
   </tbody>

@@ -143,7 +143,7 @@ app.get('/', async (req, res) => {
       page: "main",
       title: 'Game',
       games,
-      csrf: (req.session._csrf = Utils.randomString(32))
+      csrf: (req.session._csrf = Utils.generateCSRFToken())
     });
   }
   else {
@@ -197,7 +197,7 @@ app.get('/signin', (req, res) => {
     page: "signin",
     title: 'SignIn',
     username: '',
-    csrf: (req.session._csrf = Utils.randomString(32))
+    csrf: (req.session._csrf = Utils.generateCSRFToken())
   });
 });
 
@@ -252,7 +252,7 @@ app.post('/signin', async (req, res) => {
     title: 'SignIn',
     username: req.body.username,
     error: error,
-    csrf: (req.session._csrf = Utils.randomString(32))
+    csrf: (req.session._csrf = Utils.generateCSRFToken())
   });
 });
 
@@ -266,7 +266,7 @@ app.get('/signup', (req, res) => {
     title: 'Sign Up',
     username: '',
     errors: [],
-    csrf: (req.session._csrf = Utils.randomString(32))
+    csrf: (req.session._csrf = Utils.generateCSRFToken())
   });
 });
 
@@ -318,7 +318,7 @@ app.post('/signup', async (req, res) => {
     title: 'Sign Up',
     username: req.body.username,
     errors: errors,
-    csrf: (req.session._csrf = Utils.randomString(32))
+    csrf: (req.session._csrf = Utils.generateCSRFToken())
   });
   
 });
@@ -439,9 +439,7 @@ app.get('/game/history/playback', async (req, res) => {
       // invalid query param
       !/^[0-9A-F]{24}$/i.test(req.query.g) ||
       // game does not exists
-      !(g = await Game.find(req.query.g)) || 
-      // current player does not belong to the selected game
-      [g.private.players.playerOne, g.private.players.playerTwo].indexOf(req.session.uid) === -1) {
+      !(g = await Game.find(req.query.g))) {
     res.writeHead(404);
     res.end();
     return;
@@ -457,6 +455,26 @@ app.get('/game/history/playback', async (req, res) => {
 
 });
 
+app.get('/game/history/json', async (req, res) => {
+  if (!req.session.uid) {
+    res.redirect('/signin');
+    return;
+  }
+
+  let g;
+  // query parameter does not exists
+  if (!req.query.g || 
+      // invalid query param
+      !/^[0-9A-F]{24}$/i.test(req.query.g) ||
+      // game does not exists
+      !(g = await Game.find(req.query.g))) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  
+  res.send(g);
+});
 
 app.get('*', (req, res) => {
   res.writeHead(404);

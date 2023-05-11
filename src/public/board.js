@@ -2,7 +2,7 @@
   if (!document.getElementById('page_board')) return;
 
   var 
-    PlayerID, isMyTurn, RemainingWalls, TimerIV,
+    PlayerID, isMyTurn, RemainingWalls, TimerIV, GAME_STATUS,
     $gameContainer = document.getElementById('game_container'),
     $leaveBtn = document.getElementById('leave_btn'),
     isPlayBackMode = document.getElementsByClassName('playback-mode').length === 1 && $gameContainer && $gameContainer.getAttribute('data-gid'),
@@ -547,6 +547,7 @@
       PlayerID = I.player;
       TIMEOUT = I.timeout;
       RemainingWalls = 6;
+      GAME_STATUS = 'init';
     });
   
     socket.on('error', function (err) {
@@ -556,6 +557,7 @@
     socket.on('waiting', function (msg) {
       // load spinner to inform user is waiting player two to join
       setMessage(msg);
+      GAME_STATUS = 'waiting';
     });
   
     socket.on('start', function (game) {
@@ -563,6 +565,7 @@
         return setInfoTimer(game.error);
       }
   
+      GAME_STATUS = 'start';
       updateGlobals(game);
       document.getElementById('p1_name').innerHTML = game.gameState.playerName.p1;
       document.getElementById('p2_name').innerHTML = game.gameState.playerName.p2;
@@ -600,12 +603,16 @@
       a.innerHTML = 'Play again';
       removeBoard();
       $gameContainer.appendChild(a);
+      GAME_STATUS = 'end';
     });
   
     if ($leaveBtn) {
       $leaveBtn.addEventListener('click', function (e) {
-        if (!confirm('Are you sure? You will lose the game!')) {
-          e.preventDefault();
+        // only confirm when not in waiting|init game
+        if (['waiting', 'init'].indexOf(GAME_STATUS) === -1) {
+          if (!confirm('Are you sure? You will lose the game!')) {
+            e.preventDefault();
+          }
         }
       }, false);
     }
