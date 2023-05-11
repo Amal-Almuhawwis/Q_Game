@@ -209,7 +209,12 @@ app.post('/signin', async (req, res) => {
   let error = 'Invalid Username/Password'
   let isValidUsername = /^[A-Z][A-Z0-9]{4,19}$/i.test(username);
   let isValidPassword = password.length >= 8;
-  const isValidCSRF = req.session._csrf === req.body.csrf;
+  const isValidCSRF = 
+      // validate CSRF token
+      (req.session._csrf === req.body.csrf) && 
+      // treat No Referer as unauthorized,
+      // and validate referer againest origin header
+      (req.headers.referer === (req.headers.origin + '/signin'));
   delete req.session._csrf;
   
   if (0 === username.length) {
@@ -279,7 +284,9 @@ app.post('/signup', async (req, res) => {
   let isValidUsername = /^[A-Z][A-Z0-9]{4,19}$/i.test(username);
   let isValidPassword = password.length >= 8;
   let isValidRePassword = password === re_password;
-  const isValidCSRF = req.session._csrf === req.body.csrf;
+  const isValidCSRF = (req.session._csrf === req.body.csrf) &&
+                      // treat No Referer as unauthorized
+                      (req.headers.referer === (req.headers.origin + '/signup'));
   delete req.session._csrf;
 
 
@@ -324,7 +331,12 @@ app.post('/signup', async (req, res) => {
 });
 
 app.post('/game/join', async (req, res) => {
-  const isValidCSRF = req.session._csrf === req.body.csrf;
+  const isValidCSRF = 
+      // validate CSRF token
+      (req.session._csrf === req.body.csrf) && 
+      // treat No Referer as unauthorized,
+      // and validate referer againest origin header
+      (req.headers.referer === (req.headers.origin + '/'));
   delete req.session._csrf;
 
   if (isValidCSRF && req.session.uid && !req.session.gid) {
@@ -341,7 +353,12 @@ app.post('/game/join', async (req, res) => {
 });
 
 app.post('/game/create', async (req, res) => {
-  const isValidCSRF = req.session._csrf === req.body.csrf;
+  const isValidCSRF = 
+      // validate CSRF token
+      (req.session._csrf === req.body.csrf) && 
+      // treat No Referer as unauthorized,
+      // and validate referer againest origin header
+      (req.headers.referer === (req.headers.origin + '/'));
   delete req.session._csrf;
 
   // create game only for signed in user who do not have an active game
