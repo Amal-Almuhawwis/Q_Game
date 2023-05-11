@@ -500,7 +500,12 @@ app.post('/game/history/json', async (req, res) => {
     return;
   }
   
-  res.send(g);
+  res.send({
+    gameName: g.public.gameName,
+    players: g.public.gameState.playerName,
+    winner: 0 === g.public.gameState.winner ? 'draw' : g.public.gameState.winner,
+    history: g.public.gameState.history
+  });
 });
 
 app.get('*', (req, res) => {
